@@ -284,6 +284,6 @@ $userJson = json_encode($currentUser);
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js"></script>
+  <script src="script.js?v=20261116c"></script>
 </body>
 </html>

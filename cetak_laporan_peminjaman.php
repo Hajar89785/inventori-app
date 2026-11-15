@@ -364,9 +364,6 @@ $tanggalCetak = date('d') . ' ' . ($bulanIndo[date('m')] ?? date('F')) . ' ' . d
       </span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <a href="api/export_peminjaman_excel.php?periode=<?= urlencode($periode) ?>&status=<?= urlencode($statusFilter) ?>&q=<?= urlencode($searchQuery) ?>" class="btn-action" style="background:#0284c7;color:#fff;">
-        <i class="bi bi-file-earmark-excel-fill"></i> Unduh Excel (.xls)
-      </a>
       <a href="api/export_peminjaman_csv.php?periode=<?= urlencode($periode) ?>&status=<?= urlencode($statusFilter) ?>&q=<?= urlencode($searchQuery) ?>" class="btn-action btn-csv">
         <i class="bi bi-file-earmark-spreadsheet-fill"></i> Unduh File CSV
       </a>

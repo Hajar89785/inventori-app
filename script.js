@@ -945,22 +945,16 @@ function renderLoansTable() {
     } else if (st === 'disetujui' || st === 'aktif' || st === 'terlambat') {
       actionButtons = `
         <div class="d-flex align-center gap-1 justify-center">
-          <button class="btn btn-primary btn-sm" onclick="returnItem(${l.id}, '${escAttr(l.nama_barang)}')" title="Tutup Transaksi & Kembalikan Stok">
+          <button class="btn btn-primary btn-sm" onclick="returnItem(${l.id}, '${escAttr(l.nama_barang)}')" title="Konfirmasi Pengembalian Barang & Kembalikan Stok">
             <i class="bi bi-arrow-return-left"></i> Selesai
-          </button>
-          <button class="btn btn-outline-danger btn-sm" onclick="rejectLoan(${l.id}, '${escAttr(l.nama_peminjam)}')" title="Tolak / Batalkan Peminjaman">
-            <i class="bi bi-x-lg"></i> Tolak
           </button>
         </div>`;
     } else if (st === 'ditolak') {
       actionButtons = `
         <div class="d-flex align-center gap-1 justify-center">
-          <button class="btn btn-success btn-sm" onclick="approveLoan(${l.id}, '${escAttr(l.nama_peminjam)}')" title="Setujui Pengajuan Ini">
-            <i class="bi bi-check-lg"></i> Setujui
-          </button>
-          <button class="btn btn-outline-danger btn-sm" disabled style="opacity:0.55;cursor:not-allowed;" title="Pengajuan Sudah Ditolak">
-            <i class="bi bi-x-lg"></i> Tolak
-          </button>
+          <span class="badge badge-danger" style="font-size:0.78rem;padding:5px 10px;">
+            <i class="bi bi-x-circle"></i> Ditolak
+          </span>
         </div>`;
     } else if (st === 'selesai' || st === 'dikembalikan') {
       actionButtons = `

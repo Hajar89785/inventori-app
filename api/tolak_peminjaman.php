@@ -43,11 +43,9 @@ try {
         jsonResponse(false, 'Peminjaman yang sudah selesai tidak dapat ditolak.', null, 409);
     }
 
-    // Jika peminjaman sebelumnya sudah disetujui / aktif, pulihkan stok barang
-    if ($loan['status_pinjam'] === 'disetujui' || $loan['status_pinjam'] === 'aktif') {
-        $jumlah = max(1, (int) ($loan['jumlah'] ?? 1));
-        $stmt = $pdo->prepare('UPDATE barang SET stok_tersedia = stok_tersedia + :jml WHERE id = :id');
-        $stmt->execute([':jml' => $jumlah, ':id' => $loan['id_barang']]);
+    if ($loan['status_pinjam'] === 'disetujui' || $loan['status_pinjam'] === 'aktif' || $loan['status_pinjam'] === 'terlambat') {
+        $pdo->rollBack();
+        jsonResponse(false, 'Barang yang sedang dipinjam tidak dapat ditolak. Gunakan tombol "Selesai" untuk mengembalikan fisik barang dan memulihkan stok.', null, 400);
     }
 
     // Ubah status menjadi 'ditolak'
