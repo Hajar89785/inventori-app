@@ -45,6 +45,9 @@ $userJson = json_encode($currentUser);
           <h1>INVENTO</h1>
           <small>Portal Peminjam</small>
         </div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup Menu">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
       <nav class="sidebar-nav">

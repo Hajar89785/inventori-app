@@ -20,6 +20,9 @@
       <div class="sidebar-brand">
         <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
         <div><h1>INVENTO</h1><small>Inventaris Himpunan</small></div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup Menu">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
       <nav class="sidebar-nav">
         <!-- ── Menu Utama ── -->
@@ -68,32 +71,67 @@
 
         <!-- Stat Cards -->
         <section class="stat-cards" style="margin-bottom:24px;">
-          <div class="stat-card">
+          <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('')" title="Tampilkan Semua Transaksi">
             <div class="stat-icon bg-primary-light"><i class="bi bi-clipboard-data"></i></div>
-            <div class="stat-info"><h3 id="loanStatTotal">—</h3><p>Total Peminjaman</p></div>
+            <div class="stat-info"><h3 id="loanStatTotal">0</h3><p>Total Pengajuan</p></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" style="cursor:pointer;border:1.5px solid #fed7aa;" onclick="filterLoanByStatus('menunggu')" title="Filter: Menunggu Persetujuan">
             <div class="stat-icon bg-warning-light"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-info"><h3 id="loanStatAktif">—</h3><p>Masih Aktif</p></div>
+            <div class="stat-info"><h3 id="loanStatMenunggu" style="color:#d97706;">0</h3><p>Menunggu Persetujuan</p></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon bg-success-light"><i class="bi bi-check2-circle"></i></div>
-            <div class="stat-info"><h3 id="loanStatDikembalikan">—</h3><p>Dikembalikan</p></div>
+          <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('disetujui')" title="Filter: Sedang Dipinjam">
+            <div class="stat-icon bg-primary-light"><i class="bi bi-box-seam"></i></div>
+            <div class="stat-info"><h3 id="loanStatAktif" style="color:var(--primary);">0</h3><p>Sedang Dipinjam</p></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon bg-danger-light"><i class="bi bi-exclamation-circle"></i></div>
-            <div class="stat-info"><h3 id="loanStatTerlambat">—</h3><p>Terlambat</p></div>
+          <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('selesai')" title="Filter: Selesai Dikembalikan">
+            <div class="stat-icon bg-success-light"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info"><h3 id="loanStatSelesai" style="color:#10b981;">0</h3><p>Selesai Dikembalikan</p></div>
           </div>
         </section>
 
-        <!-- Filter Tabs -->
+        <!-- Filter Toolbar & Cetak Laporan -->
         <section class="card-section" style="margin-bottom:0; border-bottom:none; border-radius: var(--radius-md) var(--radius-md) 0 0;">
-          <div class="card-body" style="padding:12px 24px;">
-            <div class="filter-bar" id="loanFilterTabs">
-              <button class="filter-chip active" data-status="">Semua</button>
-              <button class="filter-chip" data-status="aktif">🔶 Aktif</button>
-              <button class="filter-chip" data-status="dikembalikan">✅ Dikembalikan</button>
-              <button class="filter-chip" data-status="terlambat">🔴 Terlambat</button>
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+            <div class="d-flex align-center gap-2">
+              <h2><i class="bi bi-table"></i> Transaksi &amp; Pengajuan Peminjaman</h2>
+            </div>
+            
+            <div class="d-flex align-center gap-2" style="flex-wrap:wrap;">
+              <!-- Dropdown Filter Bulan -->
+              <div class="filter-select-wrapper" style="position:relative;display:inline-block;">
+                <select id="loanMonthSelect" class="form-control" style="min-width:160px;padding:7px 32px 7px 12px;border-radius:18px;font-size:0.83rem;font-weight:700;color:var(--text-primary);background:#fff;border:1.5px solid #dce7f6;appearance:none;-webkit-appearance:none;cursor:pointer;">
+                  <option value="">Semua Bulan</option>
+                  <option value="2026-11">November 2026</option>
+                  <option value="2026-10">Oktober 2026</option>
+                  <option value="2026-09">September 2026</option>
+                  <option value="2026-08">Agustus 2026</option>
+                  <option value="2026-07">Juli 2026</option>
+                  <option value="2026-06">Juni 2026</option>
+                  <option value="2026-05">Mei 2026</option>
+                  <option value="2026-04">April 2026</option>
+                  <option value="2026-03">Maret 2026</option>
+                  <option value="2026-02">Februari 2026</option>
+                  <option value="2026-01">Januari 2026</option>
+                </select>
+                <i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-secondary);font-size:0.75rem;"></i>
+              </div>
+
+              <!-- Dropdown Filter Status -->
+              <div class="filter-select-wrapper" style="position:relative;display:inline-block;">
+                <select id="loanStatusSelect" class="form-control" style="min-width:170px;padding:7px 32px 7px 12px;border-radius:18px;font-size:0.83rem;font-weight:700;color:var(--text-primary);background:#fff;border:1.5px solid #dce7f6;appearance:none;-webkit-appearance:none;cursor:pointer;">
+                  <option value="">Semua Status</option>
+                  <option value="menunggu">⏳ Menunggu</option>
+                  <option value="disetujui">📦 Sedang Dipinjam</option>
+                  <option value="selesai">✅ Selesai</option>
+                  <option value="ditolak">❌ Ditolak</option>
+                </select>
+                <i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-secondary);font-size:0.75rem;"></i>
+              </div>
+
+              <!-- Tombol Cetak Laporan -->
+              <button type="button" class="btn btn-primary btn-sm" onclick="printLoansReport()" title="Buka cetak laporan resmi / simpan ke PDF" style="white-space:nowrap;padding:7px 14px;border-radius:18px;font-weight:700;font-size:0.83rem;">
+                <i class="bi bi-printer-fill"></i> Cetak Laporan
+              </button>
             </div>
           </div>
         </section>
@@ -105,18 +143,19 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width:45px;">No</th>
+                    <th style="width:45px;" class="text-center">No</th>
                     <th>Nama Peminjam</th>
-                    <th>Barang</th>
-                    <th>Tgl Pinjam</th>
-                    <th>Tgl Kembali</th>
-                    <th>Durasi</th>
-                    <th>Status</th>
-                    <th style="width:110px;">Aksi</th>
+                    <th>Barang Inventaris</th>
+                    <th style="text-align:center;">Jumlah</th>
+                    <th>Tanggal Pinjam</th>
+                    <th>Jadwal Kembali</th>
+                    <th>Keperluan / Kegiatan</th>
+                    <th style="text-align:center;">Status</th>
+                    <th style="width:190px;text-align:center;">Aksi Admin</th>
                   </tr>
                 </thead>
                 <tbody id="loansTableBody">
-                  <tr><td colspan="8" class="text-center" style="padding:32px;color:var(--text-secondary);">Memuat data...</td></tr>
+                  <tr><td colspan="9" class="text-center" style="padding:32px;color:var(--text-secondary);">Memuat data peminjaman...</td></tr>
                 </tbody>
               </table>
             </div>

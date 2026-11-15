@@ -45,6 +45,9 @@ $userJson = json_encode($currentUser);
           <h1>INVENTO</h1>
           <small>Portal Peminjam</small>
         </div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup Menu">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
@@ -127,35 +130,47 @@ $userJson = json_encode($currentUser);
 
         <!-- Stat Cards Khusus User -->
         <section class="stat-cards" style="margin-bottom:24px;">
-          <div class="stat-card">
+          <div class="stat-card" style="cursor:pointer;" onclick="filterMyLoansByStatus('semua')" title="Tampilkan Semua Peminjaman">
             <div class="stat-icon bg-primary-light"><i class="bi bi-box-seam"></i></div>
             <div class="stat-info"><h3 id="statMyTotal">0</h3><p>Total Peminjaman</p></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon bg-warning-light"><i class="bi bi-arrow-left-right"></i></div>
-            <div class="stat-info"><h3 id="statMyActive">0</h3><p>Sedang Dipinjam</p></div>
+          <div class="stat-card" style="cursor:pointer;border:1.5px solid #fed7aa;" onclick="filterMyLoansByStatus('menunggu')" title="Filter: Menunggu Persetujuan">
+            <div class="stat-icon bg-warning-light"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-info"><h3 id="statMyPending" style="color:#d97706;">0</h3><p>Menunggu Persetujuan</p></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" style="cursor:pointer;" onclick="filterMyLoansByStatus('disetujui')" title="Filter: Sedang Dipinjam">
+            <div class="stat-icon bg-primary-light"><i class="bi bi-arrow-left-right"></i></div>
+            <div class="stat-info"><h3 id="statMyActive" style="color:var(--primary);">0</h3><p>Sedang Dipinjam</p></div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;" onclick="filterMyLoansByStatus('selesai')" title="Filter: Sudah Selesai">
             <div class="stat-icon bg-success-light"><i class="bi bi-check-circle"></i></div>
-            <div class="stat-info"><h3 id="statMyReturned">0</h3><p>Sudah Selesai</p></div>
+            <div class="stat-info"><h3 id="statMyReturned" style="color:#10b981;">0</h3><p>Sudah Selesai</p></div>
           </div>
         </section>
 
         <!-- Riwayat Peminjaman Card Section -->
         <section class="card-section">
-          <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+          <div class="card-header" style="flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
             <div class="d-flex align-center gap-2">
               <h2><i class="bi bi-table"></i> Daftar Peminjaman Saya</h2>
             </div>
-            <div class="d-flex align-center gap-2">
-              <!-- Filter Status Tabs -->
-              <div class="filter-bar" id="loanStatusFilters" style="margin:0;">
-                <button class="filter-chip active" data-status="semua">Semua</button>
-                <button class="filter-chip" data-status="aktif">Sedang Dipinjam</button>
-                <button class="filter-chip" data-status="dikembalikan">Selesai</button>
-                <button class="filter-chip" data-status="terlambat">Terlambat</button>
+            <div class="d-flex align-center gap-3">
+              <div class="d-flex align-center gap-2">
+                <label for="myLoansStatusSelect" style="font-size:0.85rem;font-weight:700;color:var(--text-secondary);display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;">
+                  <i class="bi bi-funnel-fill" style="color:var(--primary);"></i> Status:
+                </label>
+                <div class="filter-select-wrapper" style="position:relative;display:inline-block;">
+                  <select id="myLoansStatusSelect" class="form-control" style="min-width:210px;padding:8px 36px 8px 14px;border-radius:20px;font-size:0.86rem;font-weight:700;color:var(--text-primary);background:#fff;border:1.5px solid #dce7f6;appearance:none;-webkit-appearance:none;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+                    <option value="semua">Semua Status</option>
+                    <option value="menunggu">⏳ Menunggu Persetujuan</option>
+                    <option value="disetujui">📦 Sedang Dipinjam</option>
+                    <option value="selesai">✅ Selesai Dikembalikan</option>
+                    <option value="ditolak">❌ Ditolak</option>
+                  </select>
+                  <i class="bi bi-chevron-down" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-secondary);font-size:0.8rem;"></i>
+                </div>
               </div>
-              <a href="user_katalog.php" class="btn btn-primary btn-sm">
+              <a href="user_katalog.php" class="btn btn-primary btn-sm" style="white-space:nowrap;">
                 <i class="bi bi-plus-lg"></i> Pinjam Barang Lagi
               </a>
             </div>

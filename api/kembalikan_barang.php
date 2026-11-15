@@ -11,6 +11,9 @@ require_once __DIR__ . '/../koneksi.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(false, 'Method tidak diizinkan.', null, 405);
 
 $input = json_decode(file_get_contents('php://input'), true);
+if (!$input && !empty($_POST)) {
+    $input = $_POST;
+}
 if (!$input) jsonResponse(false, 'Data input tidak valid.', null, 400);
 
 $id = (int) ($input['id'] ?? 0);
@@ -20,7 +23,7 @@ try {
     $pdo->beginTransaction();
 
     // Ambil data peminjaman (lock row)
-    $stmt = $pdo->prepare("SELECT * FROM peminjaman WHERE id = :id FOR UPDATE");
+    $stmt = $pdo->prepare("SELECT p.*, b.nama_barang FROM peminjaman p JOIN barang b ON p.id_barang = b.id WHERE p.id = :id FOR UPDATE");
     $stmt->execute([':id' => $id]);
     $loan = $stmt->fetch();
 
@@ -29,13 +32,18 @@ try {
         jsonResponse(false, 'Data peminjaman tidak ditemukan.', null, 404);
     }
 
-    if ($loan['status_pinjam'] === 'dikembalikan') {
+    if ($loan['status_pinjam'] === 'dikembalikan' || $loan['status_pinjam'] === 'selesai') {
         $pdo->rollBack();
-        jsonResponse(false, 'Barang sudah dikembalikan sebelumnya.', null, 409);
+        jsonResponse(false, 'Barang ini sudah dikembalikan sebelumnya.', null, 409);
     }
 
-    // Update status peminjaman
-    $stmt = $pdo->prepare("UPDATE peminjaman SET status_pinjam = 'dikembalikan' WHERE id = :id");
+    if ($loan['status_pinjam'] === 'menunggu' || $loan['status_pinjam'] === 'ditolak') {
+        $pdo->rollBack();
+        jsonResponse(false, "Peminjaman belum aktif/disetujui (status: {$loan['status_pinjam']}).", null, 400);
+    }
+
+    // Update status peminjaman menjadi 'selesai'
+    $stmt = $pdo->prepare("UPDATE peminjaman SET status_pinjam = 'selesai' WHERE id = :id");
     $stmt->execute([':id' => $id]);
 
     // Tambah kembali stok tersedia sesuai jumlah yang dipinjam
@@ -45,7 +53,7 @@ try {
 
     $pdo->commit();
 
-    jsonResponse(true, 'Barang berhasil dikembalikan!');
+    jsonResponse(true, "Barang \"{$loan['nama_barang']}\" ({$jmlKembali} unit) berhasil dikembalikan dan stok telah dipulihkan!");
 
 } catch (PDOException $e) {
     $pdo->rollBack();

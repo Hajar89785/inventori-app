@@ -13,6 +13,8 @@ const API = {
   getDashboard:      'api/get_dashboard.php',
   getPeminjaman:     'api/get_peminjaman.php',
   tambahPeminjaman:  'api/tambah_peminjaman.php',
+  setujuiPeminjaman: 'api/setujui_peminjaman.php',
+  tolakPeminjaman:   'api/tolak_peminjaman.php',
   kembalikanBarang:  'api/kembalikan_barang.php',
   getAkun:           'api/get_akun.php',
   tambahAkun:        'api/tambah_akun.php',
@@ -92,15 +94,55 @@ function initSidebar() {
   const btn = document.getElementById('sidebarToggle');
   const sb  = document.getElementById('sidebar');
   const bd  = document.getElementById('sidebarBackdrop');
-  if (!btn || !sb) return;
-  btn.addEventListener('click', () => { 
-    sb.classList.toggle('open'); 
-    bd && bd.classList.toggle('active'); 
-  });
-  if (bd) bd.addEventListener('click', () => { 
-    sb.classList.remove('open'); 
-    bd.classList.remove('active'); 
-  });
+  if (!sb) return;
+
+  const isMobile = () => window.innerWidth <= 992;
+
+  // Pulihkan status collapse sidebar di Desktop dari localStorage
+  const savedCollapsed = localStorage.getItem('invento_sidebar_collapsed');
+  if (!isMobile() && savedCollapsed === 'true') {
+    document.body.classList.add('sidebar-collapsed');
+  }
+
+  // Global toggle sidebar function
+  window.toggleSidebar = function() {
+    if (isMobile()) {
+      sb.classList.toggle('open');
+      if (bd) bd.classList.toggle('active');
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('invento_sidebar_collapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+  };
+
+  if (btn) {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      window.toggleSidebar();
+    };
+  }
+
+  if (bd) {
+    bd.onclick = () => {
+      sb.classList.remove('open');
+      bd.classList.remove('active');
+    };
+  }
+
+  // Tombol close di dalam sidebar brand (jika ada)
+  const closeBtn = document.getElementById('sidebarCloseBtn');
+  if (closeBtn) {
+    closeBtn.onclick = (e) => {
+      e.preventDefault();
+      if (isMobile()) {
+        sb.classList.remove('open');
+        if (bd) bd.classList.remove('active');
+      } else {
+        document.body.classList.add('sidebar-collapsed');
+        localStorage.setItem('invento_sidebar_collapsed', 'true');
+      }
+    };
+  }
 
   // Profil modal trigger buttons across all admin pages
   document.querySelectorAll('.btn-open-profile, #btnOpenProfile').forEach(btn => {
@@ -501,7 +543,7 @@ function renderRecentLoansTable(loans) {
   if (!loans.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7">
+        <td colspan="6">
           <div class="empty-state">
             <i class="bi bi-clock-history"></i>
             <h4>Belum ada aktivitas peminjaman</h4>
@@ -512,15 +554,23 @@ function renderRecentLoansTable(loans) {
     return;
   }
 
-  const SL = {
-    aktif:        { t: 'Sedang Dipinjam', c: 'badge-aktif' },
-    dikembalikan: { t: 'Dikembalikan',    c: 'badge-dikembalikan' },
-    terlambat:    { t: 'Terlambat',       c: 'badge-terlambat' }
-  };
-
   tbody.innerHTML = loans.map(l => {
-    const s = SL[l.status_pinjam] || SL.aktif;
-    const canReturn = l.status_pinjam === 'aktif';
+    let statusBadge = '';
+    const st = l.status_pinjam;
+    if (st === 'menunggu') {
+      statusBadge = '<span class="badge badge-warning"><i class="bi bi-hourglass-split"></i> Menunggu</span>';
+    } else if (st === 'disetujui' || st === 'aktif') {
+      statusBadge = '<span class="badge badge-primary"><i class="bi bi-box-seam"></i> Sedang Dipinjam</span>';
+    } else if (st === 'selesai' || st === 'dikembalikan') {
+      statusBadge = '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Dikembalikan</span>';
+    } else if (st === 'ditolak') {
+      statusBadge = '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Ditolak</span>';
+    } else if (st === 'terlambat') {
+      statusBadge = '<span class="badge badge-danger"><i class="bi bi-exclamation-triangle-fill"></i> Terlambat</span>';
+    } else {
+      statusBadge = `<span class="badge badge-primary">${escHtml(st)}</span>`;
+    }
+
     const initial = (l.nama_peminjam || 'A').charAt(0).toUpperCase();
 
     return `
@@ -542,15 +592,7 @@ function renderRecentLoansTable(loans) {
         <td>${formatDate(l.tanggal_pinjam)}</td>
         <td>${formatDate(l.tanggal_kembali)}</td>
         <td>${l.durasi} hari</td>
-        <td><span class="badge ${s.c}"><span class="badge-dot"></span> ${s.t}</span></td>
-        <td>
-          ${canReturn
-            ? `<button class="btn btn-success btn-sm" onclick="returnItemDashboard(${l.id})">
-                 <i class="bi bi-box-arrow-in-left"></i> Kembali
-               </button>`
-            : `<span class="badge" style="background:#e8faf4;color:#42b893;font-size:0.75rem;"><i class="bi bi-check-all"></i> Selesai</span>`
-          }
-        </td>
+        <td style="text-align:center;">${statusBadge}</td>
       </tr>`;
   }).join('');
 }
@@ -750,6 +792,7 @@ function initAdminSearch() {
 
 let currentLoanFilter = '';
 let currentLoanSearch = '';
+let currentLoanMonth = '';
 let allLoansData = [];
 
 function initPeminjamanPage() {
@@ -762,19 +805,74 @@ function initPeminjamanPage() {
 async function loadLoansData() {
   const r = await apiGet(API.getPeminjaman);
   allLoansData = (r.success && r.data) ? r.data : [];
+  populateLoanMonthDropdown();
   updateLoanStats();
   renderLoansTable();
 }
 
+function populateLoanMonthDropdown() {
+  const sel = document.getElementById('loanMonthSelect');
+  if (!sel) return;
+
+  const monthNames = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+
+  const monthsSet = new Set();
+  allLoansData.forEach(l => {
+    if (l.tanggal_pinjam && l.tanggal_pinjam.length >= 7) {
+      monthsSet.add(l.tanggal_pinjam.substring(0, 7));
+    }
+  });
+
+  const now = new Date();
+  const curYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  monthsSet.add(curYm);
+
+  const sortedMonths = Array.from(monthsSet).sort().reverse();
+
+  let html = '<option value="">Semua Bulan</option>';
+  sortedMonths.forEach(ym => {
+    const parts = ym.split('-');
+    if (parts.length === 2) {
+      const y = parts[0];
+      const mIdx = parseInt(parts[1], 10) - 1;
+      const label = `${monthNames[mIdx] || parts[1]} ${y}`;
+      html += `<option value="${ym}" ${currentLoanMonth === ym ? 'selected' : ''}>${label}</option>`;
+    }
+  });
+
+  sel.innerHTML = html;
+}
+
 function updateLoanStats() {
   const total = allLoansData.length;
-  const aktif = allLoansData.filter(l => l.status_pinjam === 'aktif').length;
-  const kembali = allLoansData.filter(l => l.status_pinjam === 'dikembalikan').length;
+  const menunggu = allLoansData.filter(l => l.status_pinjam === 'menunggu').length;
+  const aktif = allLoansData.filter(l => l.status_pinjam === 'disetujui' || l.status_pinjam === 'aktif').length;
+  const selesai = allLoansData.filter(l => l.status_pinjam === 'selesai' || l.status_pinjam === 'dikembalikan').length;
   const terlambat = allLoansData.filter(l => l.status_pinjam === 'terlambat').length;
+
   setText('loanStatTotal', total);
+  setText('loanStatMenunggu', menunggu);
   setText('loanStatAktif', aktif);
-  setText('loanStatDikembalikan', kembali);
+  setText('loanStatSelesai', selesai);
+  setText('loanStatDikembalikan', selesai);
   setText('loanStatTerlambat', terlambat);
+
+  const badgeMenunggu = document.getElementById('badgeMenungguCount');
+  if (badgeMenunggu) {
+    badgeMenunggu.textContent = menunggu;
+    badgeMenunggu.style.display = menunggu > 0 ? 'inline-block' : 'none';
+  }
+
+  const sel = document.getElementById('loanStatusSelect');
+  if (sel) {
+    const optMenunggu = sel.querySelector('option[value="menunggu"]');
+    if (optMenunggu) {
+      optMenunggu.textContent = menunggu > 0 ? `⏳ Menunggu Persetujuan (${menunggu})` : '⏳ Menunggu Persetujuan';
+    }
+  }
 }
 
 function renderLoansTable() {
@@ -782,55 +880,151 @@ function renderLoansTable() {
   if (!tbody) return;
   let data = [...allLoansData];
 
-  if (currentLoanFilter) data = data.filter(l => l.status_pinjam === currentLoanFilter);
+  if (currentLoanFilter) {
+    if (currentLoanFilter === 'disetujui') {
+      data = data.filter(l => l.status_pinjam === 'disetujui' || l.status_pinjam === 'aktif');
+    } else if (currentLoanFilter === 'selesai') {
+      data = data.filter(l => l.status_pinjam === 'selesai' || l.status_pinjam === 'dikembalikan');
+    } else {
+      data = data.filter(l => l.status_pinjam === currentLoanFilter);
+    }
+  }
+
+  // Filter Berdasarkan Bulan (YYYY-MM)
+  if (currentLoanMonth) {
+    data = data.filter(l => l.tanggal_pinjam && l.tanggal_pinjam.startsWith(currentLoanMonth));
+  }
 
   if (currentLoanSearch) {
     const q = currentLoanSearch.toLowerCase();
-    data = data.filter(l => l.nama_peminjam.toLowerCase().includes(q) || l.nama_barang.toLowerCase().includes(q));
+    data = data.filter(l => 
+      (l.nama_peminjam && l.nama_peminjam.toLowerCase().includes(q)) || 
+      (l.nama_barang && l.nama_barang.toLowerCase().includes(q)) ||
+      (l.keperluan && l.keperluan.toLowerCase().includes(q))
+    );
   }
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-clipboard-x"></i><h4>Tidak ada data peminjaman</h4><p>${currentLoanFilter || currentLoanSearch ? 'Coba ubah filter atau kata kunci.' : 'Belum ada peminjaman yang tercatat.'}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="bi bi-clipboard-x"></i><h4>Tidak ada data peminjaman</h4><p>${currentLoanFilter || currentLoanSearch ? 'Coba ubah filter atau kata kunci.' : 'Belum ada pengajuan peminjaman yang masuk.'}</p></div></td></tr>`;
     return;
   }
 
-  const SL = { 
-    aktif:        { t: 'Sedang Dipinjam', c: 'badge-aktif' }, 
-    dikembalikan: { t: 'Dikembalikan',    c: 'badge-dikembalikan' }, 
-    terlambat:    { t: 'Terlambat',       c: 'badge-terlambat' } 
-  };
-
   tbody.innerHTML = data.map((l, i) => {
-    const s = SL[l.status_pinjam] || SL.aktif;
-    const canReturn = l.status_pinjam === 'aktif';
+    let sBadge = '';
+    const st = l.status_pinjam;
+    if (st === 'menunggu') {
+      sBadge = '<span class="badge badge-warning"><i class="bi bi-hourglass-split"></i> Menunggu</span>';
+    } else if (st === 'disetujui' || st === 'aktif') {
+      sBadge = '<span class="badge badge-primary"><i class="bi bi-box-seam"></i> Sedang Dipinjam</span>';
+    } else if (st === 'selesai' || st === 'dikembalikan') {
+      sBadge = '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Selesai</span>';
+    } else if (st === 'ditolak') {
+      sBadge = '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Ditolak</span>';
+    } else if (st === 'terlambat') {
+      sBadge = '<span class="badge badge-danger"><i class="bi bi-exclamation-triangle-fill"></i> Terlambat</span>';
+    } else {
+      sBadge = `<span class="badge badge-primary">${escHtml(st)}</span>`;
+    }
+
     const initial = (l.nama_peminjam || 'A').charAt(0).toUpperCase();
+    const jml = l.jumlah ? `${l.jumlah} Unit` : '1 Unit';
+    const kep = l.keperluan ? escHtml(l.keperluan) : '<span style="color:var(--text-secondary);">-</span>';
+
+    // Tombol Aksi Admin
+    let actionButtons = '';
+    if (st === 'menunggu') {
+      actionButtons = `
+        <div class="d-flex align-center gap-1 justify-center">
+          <button class="btn btn-success btn-sm" onclick="approveLoan(${l.id}, '${escAttr(l.nama_peminjam)}')" title="Setujui Peminjaman">
+            <i class="bi bi-check-lg"></i> Setujui
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="rejectLoan(${l.id}, '${escAttr(l.nama_peminjam)}')" title="Tolak Peminjaman">
+            <i class="bi bi-x-lg"></i> Tolak
+          </button>
+        </div>`;
+    } else if (st === 'disetujui' || st === 'aktif' || st === 'terlambat') {
+      actionButtons = `
+        <div class="d-flex align-center gap-1 justify-center">
+          <button class="btn btn-primary btn-sm" onclick="returnItem(${l.id}, '${escAttr(l.nama_barang)}')" title="Tutup Transaksi & Kembalikan Stok">
+            <i class="bi bi-arrow-return-left"></i> Selesai
+          </button>
+          <button class="btn btn-outline-danger btn-sm" onclick="rejectLoan(${l.id}, '${escAttr(l.nama_peminjam)}')" title="Tolak / Batalkan Peminjaman">
+            <i class="bi bi-x-lg"></i> Tolak
+          </button>
+        </div>`;
+    } else if (st === 'ditolak') {
+      actionButtons = `
+        <div class="d-flex align-center gap-1 justify-center">
+          <button class="btn btn-success btn-sm" onclick="approveLoan(${l.id}, '${escAttr(l.nama_peminjam)}')" title="Setujui Pengajuan Ini">
+            <i class="bi bi-check-lg"></i> Setujui
+          </button>
+          <button class="btn btn-outline-danger btn-sm" disabled style="opacity:0.55;cursor:not-allowed;" title="Pengajuan Sudah Ditolak">
+            <i class="bi bi-x-lg"></i> Tolak
+          </button>
+        </div>`;
+    } else if (st === 'selesai' || st === 'dikembalikan') {
+      actionButtons = `
+        <div class="d-flex align-center gap-1 justify-center">
+          <span class="badge badge-success" style="font-size:0.78rem;padding:5px 10px;">
+            <i class="bi bi-check2-all"></i> Selesai
+          </span>
+        </div>`;
+    }
 
     return `
       <tr>
-        <td><strong>${i + 1}</strong></td>
+        <td class="text-center"><strong>${i + 1}</strong></td>
         <td>
           <div class="borrower-pill">
             <div class="borrower-avatar">${initial}</div>
             <div><strong>${escHtml(l.nama_peminjam)}</strong></div>
           </div>
         </td>
-        <td><div class="d-flex align-center gap-2"><i class="bi ${l.ikon || 'bi-box'}" style="color:var(--primary);"></i> ${escHtml(l.nama_barang)}</div></td>
+        <td>
+          <div class="d-flex align-center gap-2">
+            <i class="bi ${l.ikon || 'bi-box'}" style="color:var(--primary);font-size:1.1rem;"></i> 
+            <div>
+              <div><strong>${escHtml(l.nama_barang)}</strong></div>
+              <small style="color:var(--text-secondary);font-size:0.75rem;">${escHtml(l.kategori || '')}</small>
+            </div>
+          </div>
+        </td>
+        <td style="text-align:center;"><strong>${jml}</strong></td>
         <td>${formatDate(l.tanggal_pinjam)}</td>
         <td>${formatDate(l.tanggal_kembali)}</td>
-        <td>${l.durasi} hari</td>
-        <td><span class="badge ${s.c}"><span class="badge-dot"></span> ${s.t}</span></td>
-        <td>
-          ${canReturn
-            ? `<button class="btn btn-success btn-sm" onclick="returnItem(${l.id})"><i class="bi bi-box-arrow-in-left"></i> Kembalikan</button>`
-            : `<span class="badge" style="background:#e8faf4;color:#42b893;font-size:0.75rem;"><i class="bi bi-check-all"></i> Selesai</span>`
-          }
-        </td>
+        <td style="max-width:180px;font-size:0.85rem;line-height:1.4;">${kep}</td>
+        <td style="text-align:center;">${sBadge}</td>
+        <td style="text-align:center;">${actionButtons}</td>
       </tr>`;
   }).join('');
 }
 
-async function returnItem(loanId) {
-  showConfirm('Kembalikan Barang?', 'Konfirmasi bahwa barang inventaris telah dikembalikan oleh peminjam ke himpunan.', async () => {
+window.approveLoan = function(loanId, borrowerName) {
+  showConfirm('Setujui Pengajuan?', `Konfirmasi persetujuan peminjaman untuk <strong>"${borrowerName}"</strong>.<br><small style="color:var(--text-secondary);">Stok barang di database akan otomatis dikurangi.</small>`, async () => {
+    const r = await apiPost(API.setujuiPeminjaman, { id: loanId });
+    if (r.success) {
+      showToast(r.message, 'success');
+      loadLoansData();
+    } else {
+      showToast(r.message, 'danger');
+    }
+  });
+};
+
+window.rejectLoan = function(loanId, borrowerName) {
+  showConfirm('Tolak Pengajuan?', `Apakah Anda yakin ingin menolak pengajuan peminjaman oleh <strong>"${borrowerName}"</strong>?<br><small style="color:var(--text-secondary);">Stok barang tidak akan berkurang.</small>`, async () => {
+    const r = await apiPost(API.tolakPeminjaman, { id: loanId });
+    if (r.success) {
+      showToast(r.message, 'warning');
+      loadLoansData();
+    } else {
+      showToast(r.message, 'danger');
+    }
+  });
+};
+
+window.returnItem = function(loanId, itemName) {
+  showConfirm('Selesaikan Peminjaman?', `Konfirmasi bahwa barang <strong>"${itemName || 'inventaris'}"</strong> telah dikembalikan.<br><small style="color:var(--text-secondary);">Stok barang akan otomatis dipulihkan kembali ke database.</small>`, async () => {
     const r = await apiPost(API.kembalikanBarang, { id: loanId });
     if (r.success) {
       showToast(r.message, 'success');
@@ -839,18 +1033,79 @@ async function returnItem(loanId) {
       showToast(r.message, 'danger');
     }
   });
-}
+};
+
+window.filterLoanByStatus = function(status) {
+  currentLoanFilter = status || '';
+  const sel = document.getElementById('loanStatusSelect');
+  if (sel) sel.value = currentLoanFilter;
+  const tabs = document.getElementById('loanFilterTabs');
+  if (tabs) {
+    tabs.querySelectorAll('.filter-chip').forEach(c => {
+      if ((c.dataset.status || '') === currentLoanFilter) c.classList.add('active');
+      else c.classList.remove('active');
+    });
+  }
+  renderLoansTable();
+};
+
+window.clearLoanMonthFilter = function() {
+  const monthInp = document.getElementById('loanMonthFilter');
+  if (monthInp) monthInp.value = '';
+  currentLoanMonth = '';
+  renderLoansTable();
+};
+
+window.exportLoansExcel = function() {
+  const params = [];
+  if (currentLoanMonth) params.push('periode=' + encodeURIComponent(currentLoanMonth));
+  if (currentLoanFilter) params.push('status=' + encodeURIComponent(currentLoanFilter));
+  if (currentLoanSearch) params.push('q=' + encodeURIComponent(currentLoanSearch));
+  const url = 'api/export_peminjaman_excel.php' + (params.length ? '?' + params.join('&') : '');
+  window.location.href = url;
+};
+
+window.exportLoansCSV = function() {
+  const params = [];
+  if (currentLoanMonth) params.push('periode=' + encodeURIComponent(currentLoanMonth));
+  if (currentLoanFilter) params.push('status=' + encodeURIComponent(currentLoanFilter));
+  if (currentLoanSearch) params.push('q=' + encodeURIComponent(currentLoanSearch));
+  const url = 'api/export_peminjaman_csv.php' + (params.length ? '?' + params.join('&') : '');
+  window.location.href = url;
+};
+
+window.printLoansReport = function() {
+  const params = [];
+  if (currentLoanMonth) params.push('periode=' + encodeURIComponent(currentLoanMonth));
+  if (currentLoanFilter) params.push('status=' + encodeURIComponent(currentLoanFilter));
+  if (currentLoanSearch) params.push('q=' + encodeURIComponent(currentLoanSearch));
+  const url = 'cetak_laporan_peminjaman.php' + (params.length ? '?' + params.join('&') : '');
+  window.open(url, '_blank');
+};
 
 function initLoanFilterTabs() {
+  const sel = document.getElementById('loanStatusSelect');
+  if (sel) {
+    sel.addEventListener('change', e => {
+      filterLoanByStatus(e.target.value);
+    });
+  }
+
+  const monthSel = document.getElementById('loanMonthSelect') || document.getElementById('loanMonthFilter');
+  if (monthSel) {
+    monthSel.addEventListener('change', e => {
+      currentLoanMonth = e.target.value.trim();
+      renderLoansTable();
+    });
+  }
+
   const tabs = document.getElementById('loanFilterTabs'); 
-  if (!tabs) return;
-  tabs.addEventListener('click', e => {
-    if (!e.target.classList.contains('filter-chip')) return;
-    tabs.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-    e.target.classList.add('active');
-    currentLoanFilter = e.target.dataset.status;
-    renderLoansTable();
-  });
+  if (tabs) {
+    tabs.addEventListener('click', e => {
+      if (!e.target.classList.contains('filter-chip')) return;
+      filterLoanByStatus(e.target.dataset.status);
+    });
+  }
 }
 
 function initLoanSearch() {
@@ -1205,12 +1460,22 @@ async function loadMyLoansFull() {
 
     // Hitung statistik peminjaman pengguna
     const totalLoans = myLoansData.length;
-    const activeLoans = myLoansData.filter(i => i.status_pinjam === 'aktif').length;
-    const returnedLoans = myLoansData.filter(i => i.status_pinjam === 'dikembalikan' || i.status_pinjam === 'kembali').length;
+    const pendingLoans = myLoansData.filter(i => i.status_pinjam === 'menunggu').length;
+    const activeLoans = myLoansData.filter(i => i.status_pinjam === 'aktif' || i.status_pinjam === 'disetujui' || i.status_pinjam === 'sedang_dipinjam').length;
+    const returnedLoans = myLoansData.filter(i => i.status_pinjam === 'dikembalikan' || i.status_pinjam === 'kembali' || i.status_pinjam === 'selesai').length;
 
     setText('statMyTotal', totalLoans);
+    setText('statMyPending', pendingLoans);
     setText('statMyActive', activeLoans);
     setText('statMyReturned', returnedLoans);
+
+    const sel = document.getElementById('myLoansStatusSelect');
+    if (sel) {
+      const optMenunggu = sel.querySelector('option[value="menunggu"]');
+      if (optMenunggu) {
+        optMenunggu.textContent = pendingLoans > 0 ? `⏳ Menunggu Persetujuan (${pendingLoans})` : '⏳ Menunggu Persetujuan';
+      }
+    }
 
     renderMyLoansTable();
   } catch (err) {
@@ -1231,8 +1496,10 @@ function renderMyLoansTable() {
 
   // Filter Status
   if (myLoansStatusFilter !== 'semua') {
-    if (myLoansStatusFilter === 'dikembalikan') {
-      filtered = filtered.filter(i => i.status_pinjam === 'dikembalikan' || i.status_pinjam === 'kembali');
+    if (myLoansStatusFilter === 'disetujui') {
+      filtered = filtered.filter(i => i.status_pinjam === 'disetujui' || i.status_pinjam === 'aktif' || i.status_pinjam === 'sedang_dipinjam');
+    } else if (myLoansStatusFilter === 'selesai') {
+      filtered = filtered.filter(i => i.status_pinjam === 'selesai' || i.status_pinjam === 'dikembalikan' || i.status_pinjam === 'kembali');
     } else {
       filtered = filtered.filter(i => i.status_pinjam === myLoansStatusFilter);
     }
@@ -1265,14 +1532,27 @@ function renderMyLoansTable() {
 
   tbody.innerHTML = filtered.map((item, idx) => {
     let badgeClass = 'badge-warning';
-    let badgeIcon = 'bi-clock-fill';
-    let badgeLabel = 'Sedang Dipinjam';
+    let badgeIcon = 'bi-hourglass-split';
+    let badgeLabel = 'Menunggu Persetujuan';
 
-    if (item.status_pinjam === 'kembali' || item.status_pinjam === 'dikembalikan') {
+    const st = item.status_pinjam;
+    if (st === 'menunggu') {
+      badgeClass = 'badge-warning';
+      badgeIcon = 'bi-hourglass-split';
+      badgeLabel = 'Menunggu Persetujuan';
+    } else if (st === 'disetujui' || st === 'aktif' || st === 'sedang_dipinjam') {
+      badgeClass = 'badge-primary';
+      badgeIcon = 'bi-box-seam';
+      badgeLabel = 'Sedang Dipinjam';
+    } else if (st === 'selesai' || st === 'dikembalikan' || st === 'kembali') {
       badgeClass = 'badge-success';
       badgeIcon = 'bi-check-circle-fill';
       badgeLabel = 'Selesai Dikembalikan';
-    } else if (item.status_pinjam === 'terlambat') {
+    } else if (st === 'ditolak') {
+      badgeClass = 'badge-danger';
+      badgeIcon = 'bi-x-circle-fill';
+      badgeLabel = 'Ditolak';
+    } else if (st === 'terlambat') {
       badgeClass = 'badge-danger';
       badgeIcon = 'bi-exclamation-triangle-fill';
       badgeLabel = 'Terlambat';
@@ -1307,16 +1587,34 @@ function renderMyLoansTable() {
   }).join('');
 }
 
+window.filterMyLoansByStatus = function(status) {
+  myLoansStatusFilter = status || 'semua';
+  const sel = document.getElementById('myLoansStatusSelect');
+  if (sel) sel.value = myLoansStatusFilter;
+  const filterBox = document.getElementById('loanStatusFilters');
+  if (filterBox) {
+    filterBox.querySelectorAll('.filter-chip').forEach(c => {
+      if ((c.dataset.status || 'semua') === myLoansStatusFilter) c.classList.add('active');
+      else c.classList.remove('active');
+    });
+  }
+  renderMyLoansTable();
+};
+
 function initMyLoansFilters() {
+  const sel = document.getElementById('myLoansStatusSelect');
+  if (sel) {
+    sel.addEventListener('change', e => {
+      filterMyLoansByStatus(e.target.value);
+    });
+  }
+
   const filterBox = document.getElementById('loanStatusFilters');
   if (filterBox) {
     filterBox.addEventListener('click', e => {
       const chip = e.target.closest('.filter-chip');
       if (!chip) return;
-      filterBox.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      myLoansStatusFilter = chip.dataset.status || 'semua';
-      renderMyLoansTable();
+      filterMyLoansByStatus(chip.dataset.status || 'semua');
     });
   }
 

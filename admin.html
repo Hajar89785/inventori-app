@@ -29,6 +29,9 @@
           <h1>INVENTO</h1>
           <small>Inventaris Himpunan</small>
         </div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup Menu">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
@@ -212,8 +215,8 @@
               Aktivitas Peminjaman Terbaru
             </h2>
             <div class="d-flex align-center gap-2">
-              <a href="peminjaman.html" class="btn btn-primary btn-sm">
-                <i class="bi bi-arrow-right-circle"></i> Lihat Semua Data Peminjaman
+              <a href="admin_peminjaman.php" class="btn btn-primary btn-sm">
+                <i class="bi bi-arrow-right-circle"></i> Kelola di Menu Peminjaman
               </a>
             </div>
           </div>
@@ -227,13 +230,12 @@
                     <th>Tanggal Pinjam</th>
                     <th>Jadwal Kembali</th>
                     <th>Durasi</th>
-                    <th>Status</th>
-                    <th style="width:110px;">Aksi</th>
+                    <th style="text-align:center;">Status</th>
                   </tr>
                 </thead>
                 <tbody id="recentLoansBody">
                   <tr>
-                    <td colspan="7" class="text-center" style="padding:36px;color:var(--text-secondary);">
+                    <td colspan="6" class="text-center" style="padding:36px;color:var(--text-secondary);">
                       <i class="bi bi-arrow-repeat" style="font-size:1.5rem;"></i><br>Memuat aktivitas peminjaman...
                     </td>
                   </tr>

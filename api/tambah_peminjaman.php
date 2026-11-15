@@ -87,10 +87,10 @@ try {
         jsonResponse(false, "Stok tidak mencukupi. Tersedia hanya {$barang['stok_tersedia']} unit.", null, 409);
     }
 
-    // Insert peminjaman
+    // Insert peminjaman dengan status awal 'menunggu' (stok belum dikurangi sampai disetujui admin)
     $stmt = $pdo->prepare("
         INSERT INTO peminjaman (id_barang, jumlah, nama_peminjam, tanggal_pinjam, tanggal_kembali, durasi, keperluan, status_pinjam)
-        VALUES (:id_barang, :jumlah, :peminjam, :tgl_pinjam, :tgl_kembali, :durasi, :keperluan, 'aktif')
+        VALUES (:id_barang, :jumlah, :peminjam, :tgl_pinjam, :tgl_kembali, :durasi, :keperluan, 'menunggu')
     ");
     $stmt->execute([
         ':id_barang'   => $idBarang,
@@ -102,17 +102,9 @@ try {
         ':keperluan'   => $keperluan,
     ]);
 
-    // Kurangi stok tersedia
-    $stmt = $pdo->prepare('
-        UPDATE barang
-        SET stok_tersedia = stok_tersedia - :jumlah
-        WHERE id = :id
-    ');
-    $stmt->execute([':jumlah' => $jumlah, ':id' => $idBarang]);
-
     $pdo->commit();
 
-    jsonResponse(true, "Pengajuan peminjaman \"{$barang['nama_barang']}\" ({$jumlah} unit) berhasil diajukan!", null, 201);
+    jsonResponse(true, "Pengajuan peminjaman \"{$barang['nama_barang']}\" ({$jumlah} unit) berhasil dikirim! Menunggu persetujuan admin.", null, 201);
 
 } catch (PDOException $e) {
     $pdo->rollBack();
