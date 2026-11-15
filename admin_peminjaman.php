@@ -18,6 +18,25 @@ if (!isset($_SESSION['invento_user']['role']) || $_SESSION['invento_user']['role
 
 $currentUser = $_SESSION['invento_user'] ?? [];
 $userJson = json_encode($currentUser);
+
+require_once __DIR__ . '/koneksi.php';
+$statTotal = 0;
+$statMenunggu = 0;
+$statAktif = 0;
+$statSelesai = 0;
+$statDitolak = 0;
+try {
+    $stmt = $pdo->query("SELECT status_pinjam, COUNT(*) as jml FROM peminjaman GROUP BY status_pinjam");
+    while ($row = $stmt->fetch()) {
+        $st = $row['status_pinjam'];
+        $c = (int) $row['jml'];
+        $statTotal += $c;
+        if ($st === 'menunggu') $statMenunggu += $c;
+        elseif ($st === 'disetujui' || $st === 'aktif' || $st === 'terlambat') $statAktif += $c;
+        elseif ($st === 'selesai' || $st === 'dikembalikan') $statSelesai += $c;
+        elseif ($st === 'ditolak') $statDitolak += $c;
+    }
+} catch (Exception $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -137,23 +156,27 @@ $userJson = json_encode($currentUser);
       <!-- Content Body -->
       <main class="content-body">
         
-        <!-- Stat Cards -->
-        <section class="stat-cards" style="margin-bottom:24px;">
+        <!-- Stat Cards (5 Kategori Selaras Laporan Cetak) -->
+        <section class="stat-cards" style="margin-bottom:24px;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));">
           <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('')" title="Tampilkan Semua Transaksi">
             <div class="stat-icon bg-primary-light"><i class="bi bi-clipboard-data"></i></div>
-            <div class="stat-info"><h3 id="loanStatTotal">0</h3><p>Total Pengajuan</p></div>
+            <div class="stat-info"><h3 id="loanStatTotal"><?= $statTotal ?></h3><p>Total Pengajuan</p></div>
           </div>
           <div class="stat-card" style="cursor:pointer;border:1.5px solid #fed7aa;" onclick="filterLoanByStatus('menunggu')" title="Filter: Menunggu Persetujuan">
             <div class="stat-icon bg-warning-light"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-info"><h3 id="loanStatMenunggu" style="color:#d97706;">0</h3><p>Menunggu Persetujuan</p></div>
+            <div class="stat-info"><h3 id="loanStatMenunggu" style="color:#d97706;"><?= $statMenunggu ?></h3><p>Menunggu Persetujuan</p></div>
           </div>
           <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('disetujui')" title="Filter: Sedang Dipinjam">
             <div class="stat-icon bg-primary-light"><i class="bi bi-box-seam"></i></div>
-            <div class="stat-info"><h3 id="loanStatAktif" style="color:var(--primary);">0</h3><p>Sedang Dipinjam</p></div>
+            <div class="stat-info"><h3 id="loanStatAktif" style="color:var(--primary);"><?= $statAktif ?></h3><p>Sedang Dipinjam</p></div>
           </div>
           <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('selesai')" title="Filter: Selesai Dikembalikan">
             <div class="stat-icon bg-success-light"><i class="bi bi-check-circle"></i></div>
-            <div class="stat-info"><h3 id="loanStatSelesai" style="color:#10b981;">0</h3><p>Selesai Dikembalikan</p></div>
+            <div class="stat-info"><h3 id="loanStatSelesai" style="color:#10b981;"><?= $statSelesai ?></h3><p>Selesai Dikembalikan</p></div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;border:1.5px solid #fecaca;" onclick="filterLoanByStatus('ditolak')" title="Filter: Pengajuan Ditolak">
+            <div class="stat-icon bg-danger-light"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-info"><h3 id="loanStatDitolak" style="color:#ef4444;"><?= $statDitolak ?></h3><p>Ditolak</p></div>
           </div>
         </section>
 
@@ -284,6 +307,6 @@ $userJson = json_encode($currentUser);
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261116c"></script>
+  <script src="script.js?v=20261116d"></script>
 </body>
 </html>

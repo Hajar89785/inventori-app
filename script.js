@@ -851,12 +851,14 @@ function updateLoanStats() {
   const menunggu = allLoansData.filter(l => l.status_pinjam === 'menunggu').length;
   const aktif = allLoansData.filter(l => l.status_pinjam === 'disetujui' || l.status_pinjam === 'aktif').length;
   const selesai = allLoansData.filter(l => l.status_pinjam === 'selesai' || l.status_pinjam === 'dikembalikan').length;
+  const ditolak = allLoansData.filter(l => l.status_pinjam === 'ditolak').length;
   const terlambat = allLoansData.filter(l => l.status_pinjam === 'terlambat').length;
 
   setText('loanStatTotal', total);
   setText('loanStatMenunggu', menunggu);
   setText('loanStatAktif', aktif);
   setText('loanStatSelesai', selesai);
+  setText('loanStatDitolak', ditolak);
   setText('loanStatDikembalikan', selesai);
   setText('loanStatTerlambat', terlambat);
 
