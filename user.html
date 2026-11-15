@@ -33,12 +33,12 @@
         <p class="nav-label">Menu Peminjam</p>
         <ul style="list-style:none;padding:0;margin:0;">
           <li class="nav-item">
-            <a href="user.html" class="nav-link active">
+            <a href="user_katalog.php" class="nav-link active">
               <i class="bi bi-grid-fill"></i> Katalog &amp; Pinjam
             </a>
           </li>
           <li class="nav-item">
-            <a href="#riwayatPeminjamanSection" class="nav-link" onclick="scrollToRiwayat()">
+            <a href="user_riwayat.php" class="nav-link">
               <i class="bi bi-clock-history"></i> Peminjaman Saya
             </a>
           </li>
@@ -143,40 +143,6 @@
           </div>
         </section>
 
-        <!-- Riwayat Peminjaman Saya -->
-        <section class="card-section" id="riwayatPeminjamanSection">
-          <div class="card-header">
-            <h2><i class="bi bi-clock-history"></i> Riwayat Peminjaman Saya</h2>
-            <button class="btn btn-outline btn-sm" onclick="loadMyLoans()">
-              <i class="bi bi-arrow-clockwise"></i> Segarkan
-            </button>
-          </div>
-          <div class="card-body" style="padding:0;">
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th style="width:50px;">No</th>
-                    <th>Nama Barang</th>
-                    <th>Kategori</th>
-                    <th>Tanggal Pinjam</th>
-                    <th>Tenggat Kembali</th>
-                    <th>Durasi</th>
-                    <th style="text-align:center;">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="myLoansTableBody">
-                  <tr>
-                    <td colspan="7" class="text-center" style="padding:28px;color:var(--text-secondary);">
-                      <i class="bi bi-arrow-repeat" style="font-size:1.5rem;"></i><br>Memuat riwayat peminjaman...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
       </main>
 
       <!-- App Footer -->
@@ -196,16 +162,26 @@
         <div class="modal-body">
           <div class="form-group">
             <label for="loanItemSelect">Barang yang Dipinjam <span style="color:var(--danger);">*</span></label>
-            <select class="form-control" id="loanItemSelect" required>
+            <select class="form-control" id="loanItemSelect" required onchange="handleLoanItemChange()">
               <option value="">-- Pilih Barang --</option>
             </select>
             <div class="form-error"></div>
           </div>
-          <div class="form-group">
-            <label for="loanBorrower">Nama Peminjam <span style="color:var(--danger);">*</span></label>
-            <input type="text" class="form-control" id="loanBorrower" placeholder="Nama Anda" readonly style="background:#f1f5f9;cursor:not-allowed;">
-            <div class="form-error"></div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="loanBorrower">Nama Peminjam <span style="color:var(--danger);">*</span></label>
+              <input type="text" class="form-control" id="loanBorrower" placeholder="Nama Anda" readonly style="background:#f1f5f9;cursor:not-allowed;">
+              <div class="form-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="loanJumlah">Jumlah (Unit) <span style="color:var(--danger);">*</span></label>
+              <input type="number" class="form-control" id="loanJumlah" min="1" value="1" placeholder="Contoh: 1" required>
+              <small id="loanStockHint" style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px;display:block;"></small>
+              <div class="form-error"></div>
+            </div>
           </div>
+
           <div class="form-row">
             <div class="form-group">
               <label for="loanDate">Tanggal Pinjam <span style="color:var(--danger);">*</span></label>
@@ -213,18 +189,25 @@
               <div class="form-error"></div>
             </div>
             <div class="form-group">
-              <label for="loanDuration">Durasi (Hari) <span style="color:var(--danger);">*</span></label>
-              <input type="number" class="form-control" id="loanDuration" min="1" max="30" value="3" placeholder="Contoh: 3" required>
+              <label for="loanReturnDate">Tanggal Kembali (Rencana) <span style="color:var(--danger);">*</span></label>
+              <input type="date" class="form-control" id="loanReturnDate" required>
               <div class="form-error"></div>
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="loanKeperluan">Keperluan / Nama Kegiatan <span style="color:var(--danger);">*</span></label>
+            <textarea class="form-control" id="loanKeperluan" rows="2" placeholder="Contoh: Digunakan untuk Dokumentasi Rapat Kerja Divisi..." required></textarea>
+            <div class="form-error"></div>
+          </div>
+
           <div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:12px 16px;font-size:0.82rem;color:var(--primary);display:flex;gap:8px;align-items:flex-start;">
             <i class="bi bi-info-circle-fill" style="margin-top:2px;"></i>
-            <span>Peminjaman tercatat atas nama akun Anda. Pastikan merawat barang dan mengembalikan tepat waktu. Durasi maksimal 30 hari.</span>
+            <span>Peminjaman tercatat atas nama akun Anda. Pastikan merawat barang dan mengembalikan tepat waktu.</span>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline" id="loanModalCancel">Batal</button>
+          <button type="button" class="btn btn-outline" id="loanModalCancel" onclick="closeModal('loanModal')">Batal</button>
           <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i> Ajukan Peminjaman</button>
         </div>
       </form>

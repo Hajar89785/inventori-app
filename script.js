@@ -661,8 +661,8 @@ function initItemForm() {
     openModal('itemModal'); 
   });
 
-  closeBtn.addEventListener('click', () => closeModal('itemModal'));
-  cancelBtn.addEventListener('click', () => closeModal('itemModal'));
+  if (closeBtn)  closeBtn.addEventListener('click', () => closeModal('itemModal'));
+  if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal('itemModal'));
   modal.addEventListener('click', e => { if (e.target === modal) closeModal('itemModal'); });
   form.addEventListener('submit', e => { e.preventDefault(); handleItemSubmit(); });
 }
@@ -1143,12 +1143,15 @@ function initAkunSearch() {
 
 
 // ═════════════════════════════════════════════════════════════
-//  PAGE 5: USER — KATALOG BARANG
+//  PAGE 5: USER — KATALOG & RIWAYAT PEMINJAMAN TERPISAH
 // ═════════════════════════════════════════════════════════════
 
 let currentCatalogSearch = '', currentCategoryFilter = 'Semua';
+let myLoansData = [];
+let myLoansStatusFilter = 'semua';
+let myLoansSearchQuery = '';
 
-function initUserPage() {
+function initUserKatalogPage() {
   initSidebar(); 
   updateSidebarUser();
   loadUserStats(); 
@@ -1156,10 +1159,17 @@ function initUserPage() {
   initCatalogSearch(); 
   loadCategoryFilters(); 
   initLoanForm();
-  loadMyLoans();
 }
 
-async function loadMyLoans() {
+function initUserRiwayatPage() {
+  initSidebar(); 
+  updateSidebarUser();
+  initMyLoansFilters();
+  loadMyLoansFull();
+}
+
+// ─── Riwayat Peminjaman User ──────────────────────────────
+async function loadMyLoansFull() {
   const tbody = document.getElementById('myLoansTableBody');
   if (!tbody) return;
 
@@ -1172,54 +1182,154 @@ async function loadMyLoans() {
     return;
   }
 
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="text-center" style="padding:32px;color:var(--text-secondary);">
+        <i class="bi bi-arrow-repeat" style="font-size:1.5rem;"></i><br>Memuat riwayat peminjaman...
+      </td>
+    </tr>`;
+
   try {
     const r = await apiGet('api/get_peminjaman.php?peminjam=' + encodeURIComponent(u.nama_lengkap));
-    if (!r.success || !r.data || !r.data.length) {
+    if (!r.success || !r.data) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" class="text-center" style="padding:32px;color:var(--text-secondary);">
-            <i class="bi bi-inbox" style="font-size:2rem;color:var(--text-muted);display:block;margin-bottom:8px;"></i>
-            Belum ada riwayat peminjaman untuk akun <strong>${escHtml(u.nama_lengkap)}</strong>.
+          <td colspan="9" class="text-center" style="padding:24px;color:var(--danger);">
+            Gagal memuat data peminjaman.
           </td>
         </tr>`;
       return;
     }
 
-    tbody.innerHTML = r.data.map((item, idx) => {
-      let badgeClass = 'badge-warning';
-      let badgeIcon = 'bi-clock';
-      let badgeLabel = 'Sedang Dipinjam';
+    myLoansData = r.data || [];
 
-      if (item.status_pinjam === 'kembali' || item.status_pinjam === 'dikembalikan') {
-        badgeClass = 'badge-success';
-        badgeIcon = 'bi-check-circle-fill';
-        badgeLabel = 'Sudah Dikembalikan';
-      } else if (item.status_pinjam === 'terlambat') {
-        badgeClass = 'badge-danger';
-        badgeIcon = 'bi-exclamation-triangle-fill';
-        badgeLabel = 'Terlambat';
-      }
+    // Hitung statistik peminjaman pengguna
+    const totalLoans = myLoansData.length;
+    const activeLoans = myLoansData.filter(i => i.status_pinjam === 'aktif').length;
+    const returnedLoans = myLoansData.filter(i => i.status_pinjam === 'dikembalikan' || i.status_pinjam === 'kembali').length;
 
-      return `
-        <tr>
-          <td class="text-center">${idx + 1}</td>
-          <td><strong>${escHtml(item.nama_barang)}</strong></td>
-          <td><span class="badge badge-primary">${escHtml(item.kategori || 'Inventaris')}</span></td>
-          <td>${formatDate(item.tanggal_pinjam)}</td>
-          <td>${formatDate(item.tanggal_kembali)}</td>
-          <td>${item.durasi} Hari</td>
-          <td style="text-align:center;">
-            <span class="badge ${badgeClass}"><i class="bi ${badgeIcon}"></i> ${badgeLabel}</span>
-          </td>
-        </tr>`;
-    }).join('');
+    setText('statMyTotal', totalLoans);
+    setText('statMyActive', activeLoans);
+    setText('statMyReturned', returnedLoans);
+
+    renderMyLoansTable();
   } catch (err) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="text-center" style="padding:20px;color:var(--danger);">
-          Gagal memuat riwayat peminjaman.
+        <td colspan="9" class="text-center" style="padding:24px;color:var(--danger);">
+          Terjadi kesalahan saat memuat riwayat.
         </td>
       </tr>`;
+  }
+}
+
+function renderMyLoansTable() {
+  const tbody = document.getElementById('myLoansTableBody');
+  if (!tbody) return;
+
+  let filtered = myLoansData.slice();
+
+  // Filter Status
+  if (myLoansStatusFilter !== 'semua') {
+    if (myLoansStatusFilter === 'dikembalikan') {
+      filtered = filtered.filter(i => i.status_pinjam === 'dikembalikan' || i.status_pinjam === 'kembali');
+    } else {
+      filtered = filtered.filter(i => i.status_pinjam === myLoansStatusFilter);
+    }
+  }
+
+  // Filter Pencarian
+  if (myLoansSearchQuery) {
+    const q = myLoansSearchQuery.toLowerCase();
+    filtered = filtered.filter(i => 
+      (i.nama_barang && i.nama_barang.toLowerCase().includes(q)) ||
+      (i.kategori && i.kategori.toLowerCase().includes(q)) ||
+      (i.keperluan && i.keperluan.toLowerCase().includes(q))
+    );
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="text-center" style="padding:40px 20px;color:var(--text-secondary);">
+          <i class="bi bi-inbox" style="font-size:2.2rem;color:var(--text-muted);display:block;margin-bottom:10px;"></i>
+          <strong>Belum ada data peminjaman</strong>
+          <p style="margin:4px 0 14px;font-size:0.85rem;">Tidak ditemukan riwayat peminjaman sesuai filter yang dipilih.</p>
+          <a href="user_katalog.php" class="btn btn-primary btn-sm">
+            <i class="bi bi-grid"></i> Buka Katalog Barang
+          </a>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((item, idx) => {
+    let badgeClass = 'badge-warning';
+    let badgeIcon = 'bi-clock-fill';
+    let badgeLabel = 'Sedang Dipinjam';
+
+    if (item.status_pinjam === 'kembali' || item.status_pinjam === 'dikembalikan') {
+      badgeClass = 'badge-success';
+      badgeIcon = 'bi-check-circle-fill';
+      badgeLabel = 'Selesai Dikembalikan';
+    } else if (item.status_pinjam === 'terlambat') {
+      badgeClass = 'badge-danger';
+      badgeIcon = 'bi-exclamation-triangle-fill';
+      badgeLabel = 'Terlambat';
+    }
+
+    const jml = item.jumlah ? `${item.jumlah} Unit` : '1 Unit';
+    const kep = item.keperluan ? escHtml(item.keperluan) : '<em style="color:var(--text-secondary);">-</em>';
+
+    return `
+      <tr>
+        <td class="text-center font-bold">${idx + 1}</td>
+        <td>
+          <div class="d-flex align-center gap-2">
+            <div style="width:34px;height:34px;border-radius:8px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
+              <i class="bi ${item.ikon || 'bi-box'}"></i>
+            </div>
+            <div>
+              <strong>${escHtml(item.nama_barang)}</strong>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge badge-primary">${escHtml(item.kategori || 'Inventaris')}</span></td>
+        <td style="text-align:center;"><strong>${jml}</strong></td>
+        <td>${formatDate(item.tanggal_pinjam)}</td>
+        <td>${formatDate(item.tanggal_kembali)}</td>
+        <td>${item.durasi} Hari</td>
+        <td style="max-width:200px;font-size:0.85rem;line-height:1.4;">${kep}</td>
+        <td style="text-align:center;">
+          <span class="badge ${badgeClass}"><i class="bi ${badgeIcon}"></i> ${badgeLabel}</span>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function initMyLoansFilters() {
+  const filterBox = document.getElementById('loanStatusFilters');
+  if (filterBox) {
+    filterBox.addEventListener('click', e => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      filterBox.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      myLoansStatusFilter = chip.dataset.status || 'semua';
+      renderMyLoansTable();
+    });
+  }
+
+  const searchInp = document.getElementById('myLoansSearchInput');
+  if (searchInp) {
+    let t;
+    searchInp.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        myLoansSearchQuery = searchInp.value.trim();
+        renderMyLoansTable();
+      }, 300);
+    });
   }
 }
 
@@ -1311,15 +1421,36 @@ function initLoanForm() {
   const form      = document.getElementById('loanForm');
   if (!modal) return;
 
-  closeBtn.addEventListener('click', () => closeModal('loanModal'));
-  cancelBtn.addEventListener('click', () => closeModal('loanModal'));
+  if (closeBtn)  closeBtn.addEventListener('click', () => closeModal('loanModal'));
+  if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal('loanModal'));
   modal.addEventListener('click', e => { if (e.target === modal) closeModal('loanModal'); });
 
   const di = document.getElementById('loanDate');
   if (di) di.value = new Date().toISOString().split('T')[0];
 
-  form.addEventListener('submit', e => { e.preventDefault(); handleLoanSubmit(); });
+  if (form) {
+    form.addEventListener('submit', e => { e.preventDefault(); handleLoanSubmit(); });
+  }
 }
+
+window.handleLoanItemChange = function() {
+  const sel = document.getElementById('loanItemSelect');
+  const hint = document.getElementById('loanStockHint');
+  const jumlahInp = document.getElementById('loanJumlah');
+  if (!sel || !sel.value) {
+    if (hint) hint.textContent = '';
+    return;
+  }
+  const opt = sel.options[sel.selectedIndex];
+  const max = parseInt(opt?.dataset.stok || '10', 10);
+  if (jumlahInp) {
+    jumlahInp.max = max;
+    if (parseInt(jumlahInp.value, 10) > max) jumlahInp.value = max;
+  }
+  if (hint) {
+    hint.textContent = `Tersedia: ${max} unit barang siap dipinjam.`;
+  }
+};
 
 async function populateItemSelect() {
   const sel = document.getElementById('loanItemSelect');
@@ -1328,15 +1459,31 @@ async function populateItemSelect() {
   if (!r.success) return;
   const avail = (r.data || []).filter(i => i.stok_tersedia > 0);
   sel.innerHTML = '<option value="">-- Pilih Barang Inventaris --</option>' +
-    avail.map(i => `<option value="${i.id}">${escHtml(i.nama_barang)} (tersedia: ${i.stok_tersedia})</option>`).join('');
+    avail.map(i => `<option value="${i.id}" data-stok="${i.stok_tersedia}">${escHtml(i.nama_barang)} (tersedia: ${i.stok_tersedia} unit)</option>`).join('');
 }
 
 async function openLoanForm(itemId) {
   await populateItemSelect();
   const sel = document.getElementById('loanItemSelect');
-  if (sel) sel.value = itemId;
+  if (sel) {
+    sel.value = itemId;
+    handleLoanItemChange();
+  }
+
+  const now = new Date();
   const di = document.getElementById('loanDate');
-  if (di) di.value = new Date().toISOString().split('T')[0];
+  const dr = document.getElementById('loanReturnDate');
+  if (di) di.value = now.toISOString().split('T')[0];
+  if (dr) {
+    const next = new Date(now.getTime() + 3 * 86400000);
+    dr.value = next.toISOString().split('T')[0];
+  }
+
+  const jumlahInp = document.getElementById('loanJumlah');
+  if (jumlahInp) jumlahInp.value = 1;
+
+  const kepInp = document.getElementById('loanKeperluan');
+  if (kepInp) kepInp.value = '';
 
   // Auto-fill logged in user name
   const userJson = localStorage.getItem('invento_user');
@@ -1357,31 +1504,51 @@ async function openLoanForm(itemId) {
 async function handleLoanSubmit() {
   const idB = parseInt(document.getElementById('loanItemSelect').value, 10);
   const nm  = document.getElementById('loanBorrower').value.trim();
+  const jml = parseInt(document.getElementById('loanJumlah')?.value, 10) || 1;
   const dt  = document.getElementById('loanDate').value;
-  const dur = parseInt(document.getElementById('loanDuration').value, 10);
+  const dtReturn = document.getElementById('loanReturnDate')?.value || '';
+  const kep = document.getElementById('loanKeperluan')?.value.trim() || '';
 
   let v = true;
-  if (!idB) { showFieldError('loanItemSelect', 'Pilih barang.'); v = false; } else hideFieldError('loanItemSelect');
-  if (!nm || nm.length < 3) { showFieldError('loanBorrower', 'Nama minimal 3 karakter.'); v = false; } else hideFieldError('loanBorrower');
+  if (!idB) { showFieldError('loanItemSelect', 'Pilih barang yang ingin dipinjam.'); v = false; } else hideFieldError('loanItemSelect');
+  if (!nm || nm.length < 3) { showFieldError('loanBorrower', 'Nama peminjam wajib terisi.'); v = false; } else hideFieldError('loanBorrower');
+  if (isNaN(jml) || jml < 1) { showFieldError('loanJumlah', 'Jumlah peminjaman minimal 1 unit.'); v = false; } else hideFieldError('loanJumlah');
   if (!dt) { showFieldError('loanDate', 'Tanggal pinjam wajib diisi.'); v = false; } else hideFieldError('loanDate');
-  if (isNaN(dur) || dur < 1) { showFieldError('loanDuration', 'Durasi minimal 1 hari.'); v = false; } 
-  else if (dur > 30) { showFieldError('loanDuration', 'Durasi maksimal 30 hari.'); v = false; } 
-  else hideFieldError('loanDuration');
+  if (!dtReturn) {
+    showFieldError('loanReturnDate', 'Tanggal kembali wajib diisi.'); v = false;
+  } else if (dtReturn < dt) {
+    showFieldError('loanReturnDate', 'Tanggal kembali tidak boleh sebelum tanggal pinjam.'); v = false;
+  } else {
+    hideFieldError('loanReturnDate');
+  }
+  if (!kep || kep.length < 3) {
+    showFieldError('loanKeperluan', 'Keperluan/kegiatan wajib diisi (minimal 3 karakter).'); v = false;
+  } else {
+    hideFieldError('loanKeperluan');
+  }
+
   if (!v) return;
 
   const btn = document.querySelector('#loanForm button[type="submit"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Memproses...'; }
 
-  const r = await apiPost(API.tambahPeminjaman, { id_barang: idB, nama_peminjam: nm, tanggal_pinjam: dt, durasi: dur });
-  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send"></i> Ajukan Peminjaman'; }
+  const r = await apiPost(API.tambahPeminjaman, {
+    id_barang: idB,
+    nama_peminjam: nm,
+    jumlah: jml,
+    tanggal_pinjam: dt,
+    tanggal_kembali: dtReturn,
+    keperluan: kep
+  });
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send-fill"></i> Ajukan Peminjaman'; }
 
   if (r.success) {
     showToast(r.message, 'success');
     closeModal('loanModal');
     document.getElementById('loanForm').reset();
-    loadCatalog();
-    loadUserStats();
-    if (typeof loadMyLoans === 'function') loadMyLoans();
+    if (typeof loadCatalog === 'function') loadCatalog();
+    if (typeof loadUserStats === 'function') loadUserStats();
   } else {
     showToast(r.message, 'danger');
   }
@@ -1394,7 +1561,7 @@ async function handleLoanSubmit() {
 
 function checkAuthGuard() {
   const body = document.body;
-  const isLoginPage = body.classList.contains('login-body');
+  const isLoginPage = body.classList.contains('login-body') || body.classList.contains('split-login-body');
   const isAdminPage = body.id === 'adminPage';
   const isUserPage = body.id === 'userPage';
 
@@ -1409,7 +1576,7 @@ function checkAuthGuard() {
   // Jika di halaman login tapi sudah memiliki sesi login aktif
   if (isLoginPage) {
     if (user && user.role) {
-      window.location.replace(user.role === 'admin' ? 'admin.html' : 'user.html');
+      window.location.replace(user.role === 'admin' ? 'admin_dashboard.php' : 'user_katalog.php');
     }
     return;
   }
@@ -1452,5 +1619,12 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'akun':       initAkunPage();       break;
     }
   }
-  if (body.id === 'userPage') initUserPage();
+
+  if (body.id === 'userPage') {
+    if (page === 'user_riwayat') {
+      initUserRiwayatPage();
+    } else {
+      initUserKatalogPage();
+    }
+  }
 });

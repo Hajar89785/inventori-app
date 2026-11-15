@@ -38,9 +38,10 @@ try {
     $stmt = $pdo->prepare("UPDATE peminjaman SET status_pinjam = 'dikembalikan' WHERE id = :id");
     $stmt->execute([':id' => $id]);
 
-    // Tambah kembali stok tersedia
-    $stmt = $pdo->prepare('UPDATE barang SET stok_tersedia = stok_tersedia + 1 WHERE id = :id');
-    $stmt->execute([':id' => $loan['id_barang']]);
+    // Tambah kembali stok tersedia sesuai jumlah yang dipinjam
+    $jmlKembali = max(1, (int) ($loan['jumlah'] ?? 1));
+    $stmt = $pdo->prepare('UPDATE barang SET stok_tersedia = stok_tersedia + :jml WHERE id = :id');
+    $stmt->execute([':jml' => $jmlKembali, ':id' => $loan['id_barang']]);
 
     $pdo->commit();
 

@@ -15,15 +15,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $input = json_decode(file_get_contents('php://input'), true);
 
+if (!$input && !empty($_POST)) {
+    $input = $_POST;
+}
+
 if (!$input) {
     jsonResponse(false, 'Data input tidak valid.', null, 400);
 }
 
 // ─── Validasi ────────────────────────────────────────────
-$idBarang  = (int) ($input['id_barang'] ?? 0);
-$peminjam  = trim($input['nama_peminjam'] ?? '');
-$tglPinjam = trim($input['tanggal_pinjam'] ?? '');
-$durasi    = (int) ($input['durasi'] ?? 0);
+$idBarang   = (int) ($input['id_barang'] ?? 0);
+$peminjam   = trim($input['nama_peminjam'] ?? '');
+$jumlah     = max(1, (int) ($input['jumlah'] ?? 1));
+$tglPinjam  = trim($input['tanggal_pinjam'] ?? '');
+$tglKembali = trim($input['tanggal_kembali'] ?? '');
+$durasi     = (int) ($input['durasi'] ?? 0);
+$keperluan  = trim($input['keperluan'] ?? '');
 
 $errors = [];
 
@@ -36,8 +43,25 @@ if ($peminjam === '' || mb_strlen($peminjam) < 3) {
 if ($tglPinjam === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $tglPinjam)) {
     $errors[] = 'Tanggal pinjam tidak valid.';
 }
-if ($durasi < 1 || $durasi > 30) {
-    $errors[] = 'Durasi harus antara 1 sampai 30 hari.';
+
+if ($tglKembali !== '') {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tglKembali)) {
+        $errors[] = 'Tanggal kembali tidak valid.';
+    } elseif ($tglKembali < $tglPinjam) {
+        $errors[] = 'Tanggal kembali tidak boleh lebih awal dari tanggal pinjam.';
+    } else {
+        $diffDays = (int) round((strtotime($tglKembali) - strtotime($tglPinjam)) / 86400);
+        $durasi = max(1, $diffDays);
+    }
+} elseif ($durasi > 0) {
+    $tglKembali = date('Y-m-d', strtotime($tglPinjam . " +{$durasi} days"));
+} else {
+    $durasi = 3;
+    $tglKembali = date('Y-m-d', strtotime($tglPinjam . " +3 days"));
+}
+
+if ($durasi > 30) {
+    $errors[] = 'Durasi peminjaman maksimal 30 hari.';
 }
 
 if (!empty($errors)) {
@@ -58,38 +82,37 @@ try {
         jsonResponse(false, 'Barang tidak ditemukan.', null, 404);
     }
 
-    if ($barang['stok_tersedia'] < 1) {
+    if ($barang['stok_tersedia'] < $jumlah) {
         $pdo->rollBack();
-        jsonResponse(false, 'Maaf, barang sudah tidak tersedia.', null, 409);
+        jsonResponse(false, "Stok tidak mencukupi. Tersedia hanya {$barang['stok_tersedia']} unit.", null, 409);
     }
-
-    // Hitung tanggal kembali
-    $tglKembali = date('Y-m-d', strtotime($tglPinjam . " +{$durasi} days"));
 
     // Insert peminjaman
     $stmt = $pdo->prepare("
-        INSERT INTO peminjaman (id_barang, nama_peminjam, tanggal_pinjam, tanggal_kembali, durasi, status_pinjam)
-        VALUES (:id_barang, :peminjam, :tgl_pinjam, :tgl_kembali, :durasi, 'aktif')
+        INSERT INTO peminjaman (id_barang, jumlah, nama_peminjam, tanggal_pinjam, tanggal_kembali, durasi, keperluan, status_pinjam)
+        VALUES (:id_barang, :jumlah, :peminjam, :tgl_pinjam, :tgl_kembali, :durasi, :keperluan, 'aktif')
     ");
     $stmt->execute([
-        ':id_barang'  => $idBarang,
-        ':peminjam'   => $peminjam,
-        ':tgl_pinjam' => $tglPinjam,
-        ':tgl_kembali'=> $tglKembali,
-        ':durasi'     => $durasi,
+        ':id_barang'   => $idBarang,
+        ':jumlah'      => $jumlah,
+        ':peminjam'    => $peminjam,
+        ':tgl_pinjam'  => $tglPinjam,
+        ':tgl_kembali' => $tglKembali,
+        ':durasi'      => $durasi,
+        ':keperluan'   => $keperluan,
     ]);
 
     // Kurangi stok tersedia
     $stmt = $pdo->prepare('
         UPDATE barang
-        SET stok_tersedia = stok_tersedia - 1
+        SET stok_tersedia = stok_tersedia - :jumlah
         WHERE id = :id
     ');
-    $stmt->execute([':id' => $idBarang]);
+    $stmt->execute([':jumlah' => $jumlah, ':id' => $idBarang]);
 
     $pdo->commit();
 
-    jsonResponse(true, "Peminjaman \"{$barang['nama_barang']}\" berhasil diajukan!", null, 201);
+    jsonResponse(true, "Pengajuan peminjaman \"{$barang['nama_barang']}\" ({$jumlah} unit) berhasil diajukan!", null, 201);
 
 } catch (PDOException $e) {
     $pdo->rollBack();
