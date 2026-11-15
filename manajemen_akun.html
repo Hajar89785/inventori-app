@@ -94,10 +94,14 @@
           <div class="card-header">
             <h2><i class="bi bi-people-fill"></i> Data Pengurus &amp; Anggota Himpunan</h2>
             <div class="d-flex align-center gap-2">
-              <div class="filter-bar" id="akunFilterTabs">
-                <button type="button" class="filter-chip active" data-role="">Semua</button>
-                <button type="button" class="filter-chip" data-role="admin"><i class="bi bi-shield-lock-fill" style="color:#435ebe;"></i> Pengurus / Admin</button>
-                <button type="button" class="filter-chip" data-role="user"><i class="bi bi-person-fill" style="color:#57caeb;"></i> Anggota / Kader</button>
+              <!-- Dropdown Filter Role -->
+              <div class="filter-select-wrapper" style="position:relative;display:inline-block;">
+                <select id="akunRoleSelect" class="form-control" style="min-width:180px;padding:7px 32px 7px 12px;border-radius:18px;font-size:0.83rem;font-weight:700;color:var(--text-primary);background:#fff;border:1.5px solid #dce7f6;appearance:none;-webkit-appearance:none;cursor:pointer;">
+                  <option value="">Semua Peran (Role)</option>
+                  <option value="admin">🛡️ Pengurus / Admin</option>
+                  <option value="user">👤 Anggota / Kader</option>
+                </select>
+                <i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-secondary);font-size:0.75rem;"></i>
               </div>
               <button class="btn btn-primary btn-sm" id="btnAddAkun"><i class="bi bi-plus-lg"></i> Tambah Akun</button>
             </div>
@@ -111,13 +115,14 @@
                     <th>Nama Lengkap</th>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>Password</th>
                     <th>Role</th>
                     <th>Status</th>
                     <th style="width:120px;">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="akunTableBody">
-                  <tr><td colspan="7" class="text-center" style="padding:32px;color:var(--text-secondary);">Memuat data...</td></tr>
+                  <tr><td colspan="8" class="text-center" style="padding:32px;color:var(--text-secondary);">Memuat data...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -259,6 +264,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=20261116b"></script>
 </body>
 </html>

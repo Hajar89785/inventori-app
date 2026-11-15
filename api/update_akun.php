@@ -53,11 +53,28 @@ try {
     ]);
 
     if (!empty($input['password'])) {
-        $stmtPass = $pdo->prepare('UPDATE akun SET password = :p WHERE id = :id');
-        $stmtPass->execute([
-            ':p'  => password_hash($input['password'], PASSWORD_DEFAULT),
-            ':id' => $id,
-        ]);
+        $rawPass = trim($input['password']);
+        $hashed  = password_hash($rawPass, PASSWORD_DEFAULT);
+
+        // Coba tambahkan kolom plain_password ke tabel akun jika belum ada
+        try {
+            $pdo->exec("ALTER TABLE akun ADD COLUMN plain_password VARCHAR(255) NULL AFTER password");
+        } catch (Exception $ignored) {}
+
+        try {
+            $stmtPass = $pdo->prepare('UPDATE akun SET password = :p, plain_password = :plain WHERE id = :id');
+            $stmtPass->execute([
+                ':p'     => $hashed,
+                ':plain' => $rawPass,
+                ':id'    => $id,
+            ]);
+        } catch (PDOException $e) {
+            $stmtPass = $pdo->prepare('UPDATE akun SET password = :p WHERE id = :id');
+            $stmtPass->execute([
+                ':p'  => $hashed,
+                ':id' => $id,
+            ]);
+        }
     }
 
     $stmt = $pdo->prepare('SELECT id, nama_lengkap, username, email, role, status, created_at, updated_at FROM akun WHERE id = :id');

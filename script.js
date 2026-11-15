@@ -1144,9 +1144,15 @@ function initAkunPage() {
   initAkunFilterTabs();
 }
 
-// Global Tab Switcher untuk Akun (bisa dipanggil dari Tab maupun Stat Card)
+// Global Tab Switcher untuk Akun (bisa dipanggil dari Dropdown, Tab maupun Stat Card)
 window.switchAkunTab = function(role) {
   currentAkunRoleFilter = role || '';
+
+  const sel = document.getElementById('akunRoleSelect');
+  if (sel) {
+    sel.value = currentAkunRoleFilter;
+  }
+
   const tabs = document.getElementById('akunFilterTabs');
   if (tabs) {
     tabs.querySelectorAll('.filter-chip').forEach(c => {
@@ -1174,7 +1180,7 @@ async function loadAkunTable(q = '') {
   const tbody = document.getElementById('akunTableBody'); 
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:32px;color:var(--text-secondary);"><i class="bi bi-arrow-repeat" style="font-size:1.5rem;"></i><br>Memuat data akun...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="padding:32px;color:var(--text-secondary);"><i class="bi bi-arrow-repeat" style="font-size:1.5rem;"></i><br>Memuat data akun...</td></tr>';
 
   let url = API.getAkun;
   const params = [];
@@ -1184,13 +1190,13 @@ async function loadAkunTable(q = '') {
 
   const r = await apiGet(url);
   if (!r.success) { 
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-exclamation-circle"></i><h4>Gagal memuat</h4><p>${r.message}</p></div></td></tr>`; 
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-exclamation-circle"></i><h4>Gagal memuat</h4><p>${r.message}</p></div></td></tr>`; 
     return; 
   }
 
   const data = r.data || [];
   if (!data.length) { 
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="bi bi-people"></i><h4>Tidak ada akun ditemukan</h4><p>Silakan sesuaikan filter atau tambahkan akun baru.</p></div></td></tr>'; 
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="bi bi-people"></i><h4>Tidak ada akun ditemukan</h4><p>Silakan sesuaikan filter atau tambahkan akun baru.</p></div></td></tr>'; 
     return; 
   }
 
@@ -1198,6 +1204,7 @@ async function loadAkunTable(q = '') {
     const roleBadge = a.role === 'admin' ? 'badge-role-admin' : 'badge-role-user';
     const statusBadge = a.status === 'aktif' ? 'badge-available' : 'badge-empty';
     const roleLabel = a.role === 'admin' ? 'Pengurus / Admin' : 'Anggota / Kader';
+    const displayPass = a.display_password || (a.role === 'admin' ? 'admin123' : 'user123');
 
     return `
       <tr>
@@ -1212,6 +1219,11 @@ async function loadAkunTable(q = '') {
         </td>
         <td><code style="font-size:0.82rem;">${escHtml(a.username)}</code></td>
         <td>${a.email ? escHtml(a.email) : '<span class="text-muted">—</span>'}</td>
+        <td>
+          <code style="font-size:0.83rem;font-weight:700;color:var(--primary);background:#f0f4ff;padding:4px 10px;border-radius:6px;border:1px solid #dce7f6;font-family:monospace;letter-spacing:0.5px;display:inline-flex;align-items:center;">
+            <i class="bi bi-key-fill" style="margin-right:6px;font-size:0.8rem;"></i>${escHtml(displayPass)}
+          </code>
+        </td>
         <td><span class="badge ${roleBadge}"><i class="bi ${a.role === 'admin' ? 'bi-shield-lock-fill' : 'bi-people-fill'}"></i> ${roleLabel}</span></td>
         <td><span class="badge ${statusBadge}"><span class="badge-dot"></span> ${a.status === 'aktif' ? 'Aktif' : 'Nonaktif'}</span></td>
         <td>
@@ -1225,15 +1237,23 @@ async function loadAkunTable(q = '') {
 }
 
 function initAkunFilterTabs() {
-  const tabs = document.getElementById('akunFilterTabs');
-  if (!tabs) return;
+  const sel = document.getElementById('akunRoleSelect');
+  if (sel) {
+    sel.value = currentAkunRoleFilter || '';
+    sel.addEventListener('change', e => {
+      switchAkunTab(e.target.value);
+    });
+  }
 
-  tabs.addEventListener('click', e => {
-    const chip = e.target.closest('.filter-chip');
-    if (!chip) return;
-    const role = chip.dataset.role || '';
-    switchAkunTab(role);
-  });
+  const tabs = document.getElementById('akunFilterTabs');
+  if (tabs) {
+    tabs.addEventListener('click', e => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      const role = chip.dataset.role || '';
+      switchAkunTab(role);
+    });
+  }
 }
 
 window.toggleAkunPassword = function(inpId, iconId) {
@@ -1248,6 +1268,56 @@ window.toggleAkunPassword = function(inpId, iconId) {
     icon.className = 'bi bi-eye';
   }
 };
+
+window.toggleRowPassword = function(id) {
+  const el = document.getElementById(`passText_${id}`);
+  const icon = document.getElementById(`passIcon_${id}`);
+  if (!el || !icon) return;
+
+  const isVisible = el.getAttribute('data-visible') === 'true';
+  const realPass = el.getAttribute('data-password') || '••••••••';
+
+  if (isVisible) {
+    el.textContent = '••••••••';
+    el.setAttribute('data-visible', 'false');
+    icon.className = 'bi bi-eye';
+    icon.parentElement.title = 'Tampilkan Password';
+  } else {
+    el.textContent = realPass;
+    el.setAttribute('data-visible', 'true');
+    icon.className = 'bi bi-eye-slash';
+    icon.parentElement.title = 'Sembunyikan Password';
+  }
+};
+
+window.copyRowPassword = function(pass) {
+  if (!pass) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(pass).then(() => {
+      showToast('Password berhasil disalin!');
+    }).catch(() => {
+      fallbackCopyText(pass);
+    });
+  } else {
+    fallbackCopyText(pass);
+  }
+};
+
+function fallbackCopyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('Password berhasil disalin!');
+  } catch (err) {
+    alert('Password: ' + text);
+  }
+  document.body.removeChild(ta);
+}
 
 function resetAkunPasswordFields() {
   const pass = document.getElementById('akunPassword');

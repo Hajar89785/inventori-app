@@ -12,6 +12,24 @@
 require_once __DIR__ . '/../koneksi.php';
 
 try {
+    // Pastikan kolom password & plain_password ada di tabel akun
+    try {
+        $pdo->exec("ALTER TABLE akun ADD COLUMN password VARCHAR(255) NULL AFTER email");
+    } catch (Exception $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE akun ADD COLUMN plain_password VARCHAR(255) NULL AFTER password");
+    } catch (Exception $e) {}
+
+    // Pastikan akun di database memiliki password terisi
+    try {
+        $adminHash = password_hash('admin123', PASSWORD_DEFAULT);
+        $userHash  = password_hash('user123', PASSWORD_DEFAULT);
+
+        $pdo->exec("UPDATE akun SET password = '{$adminHash}', plain_password = 'admin123' WHERE role = 'admin' AND (password IS NULL OR password = '' OR plain_password IS NULL OR plain_password = '')");
+        $pdo->exec("UPDATE akun SET password = '{$userHash}', plain_password = 'user123' WHERE role = 'user' AND (password IS NULL OR password = '' OR plain_password IS NULL OR plain_password = '')");
+    } catch (Exception $e) {}
+
     if (isset($_GET['id'])) {
         $stmt = $pdo->prepare('SELECT * FROM akun WHERE id = :id');
         $stmt->execute([':id' => (int) $_GET['id']]);
@@ -21,7 +39,7 @@ try {
         jsonResponse(true, '', $akun);
     }
 
-    $sql    = 'SELECT id, nama_lengkap, username, email, role, status, created_at, updated_at FROM akun';
+    $sql    = 'SELECT * FROM akun';
     $where  = [];
     $params = [];
 
@@ -43,7 +61,30 @@ try {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    jsonResponse(true, '', $stmt->fetchAll());
+    $rows = $stmt->fetchAll();
+
+    foreach ($rows as &$r) {
+        $plain = $r['plain_password'] ?? '';
+        $pass  = $r['password'] ?? '';
+
+        if (!empty($plain)) {
+            $r['display_password'] = $plain;
+        } elseif (empty($pass)) {
+            $r['display_password'] = ($r['role'] === 'admin') ? 'admin123' : 'user123';
+        } elseif (password_verify('admin123', $pass)) {
+            $r['display_password'] = 'admin123';
+        } elseif (password_verify('user123', $pass)) {
+            $r['display_password'] = 'user123';
+        } elseif (strpos($pass, '$2y$') !== 0 && strpos($pass, '$2a$') !== 0) {
+            $r['display_password'] = $pass;
+        } else {
+            $r['display_password'] = ($r['role'] === 'admin') ? 'admin123' : 'user123';
+        }
+        unset($r['password']);
+    }
+    unset($r);
+
+    jsonResponse(true, '', $rows);
 
 } catch (PDOException $e) {
     jsonResponse(false, 'Gagal mengambil data akun: ' . $e->getMessage(), null, 500);

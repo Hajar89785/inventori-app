@@ -41,18 +41,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Email/Username dan Password wajib diisi.';
     } else {
         try {
-            // Cek di tabel users (atau akun)
-            $stmt = $pdo->prepare('
-                SELECT id, nama_lengkap, username, email, password, role, status
-                FROM users
-                WHERE email = :val1 OR username = :val2
-                LIMIT 1
-            ');
-            $stmt->execute([
-                ':val1' => $email,
-                ':val2' => $email,
-            ]);
-            $user = $stmt->fetch();
+            // Cek di tabel akun (atau fallback tabel users)
+            $user = null;
+            try {
+                $stmt = $pdo->prepare('
+                    SELECT id, nama_lengkap, username, email, password, role, status
+                    FROM akun
+                    WHERE email = :val1 OR username = :val2
+                    LIMIT 1
+                ');
+                $stmt->execute([':val1' => $email, ':val2' => $email]);
+                $user = $stmt->fetch();
+            } catch (PDOException $e) {
+                // Fallback jika tabel bernama users
+                $stmt = $pdo->prepare('
+                    SELECT id, nama_lengkap, username, email, password, role, status
+                    FROM users
+                    WHERE email = :val1 OR username = :val2
+                    LIMIT 1
+                ');
+                $stmt->execute([':val1' => $email, ':val2' => $email]);
+                $user = $stmt->fetch();
+            }
 
             if (!$user) {
                 $error = 'Email atau Username tidak terdaftar dalam sistem.';

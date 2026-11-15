@@ -38,17 +38,37 @@ try {
     }
     $hashedPass = password_hash($rawPass, PASSWORD_DEFAULT);
 
-    $stmt = $pdo->prepare('
-        INSERT INTO akun (nama_lengkap, username, email, password, role, status)
-        VALUES (:nama, :username, :email, :password, :role, \'aktif\')
-    ');
-    $stmt->execute([
-        ':nama'     => $nama,
-        ':username' => $username,
-        ':email'    => $email,
-        ':password' => $hashedPass,
-        ':role'     => $role,
-    ]);
+    // Coba tambahkan kolom plain_password ke tabel akun jika belum ada
+    try {
+        $pdo->exec("ALTER TABLE akun ADD COLUMN plain_password VARCHAR(255) NULL AFTER password");
+    } catch (Exception $ignored) {}
+
+    try {
+        $stmt = $pdo->prepare('
+            INSERT INTO akun (nama_lengkap, username, email, password, plain_password, role, status)
+            VALUES (:nama, :username, :email, :password, :plain, :role, \'aktif\')
+        ');
+        $stmt->execute([
+            ':nama'     => $nama,
+            ':username' => $username,
+            ':email'    => $email,
+            ':password' => $hashedPass,
+            ':plain'    => $rawPass,
+            ':role'     => $role,
+        ]);
+    } catch (PDOException $e) {
+        $stmt = $pdo->prepare('
+            INSERT INTO akun (nama_lengkap, username, email, password, role, status)
+            VALUES (:nama, :username, :email, :password, :role, \'aktif\')
+        ');
+        $stmt->execute([
+            ':nama'     => $nama,
+            ':username' => $username,
+            ':email'    => $email,
+            ':password' => $hashedPass,
+            ':role'     => $role,
+        ]);
+    }
 
     $newId = (int) $pdo->lastInsertId();
     $stmt = $pdo->prepare('SELECT id, nama_lengkap, username, email, role, status, created_at FROM akun WHERE id = :id');
