@@ -91,6 +91,7 @@ a:hover {
 .sidebar::-webkit-scrollbar {
   width: 5px;
 }
+
 .sidebar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
@@ -126,6 +127,7 @@ a:hover {
   margin: 0;
   line-height: 1.2;
 }
+
 .sidebar-brand small {
   font-size: 0.72rem;
   color: #8c94af;
@@ -221,6 +223,7 @@ a:hover {
   flex: 1;
   min-width: 0;
 }
+
 .sidebar-user-info .user-name {
   color: #fff;
   font-size: 0.85rem;
@@ -229,6 +232,7 @@ a:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .sidebar-user-info .user-role {
   color: #8c94af;
   font-size: 0.72rem;
@@ -258,6 +262,7 @@ a:hover {
   body.sidebar-collapsed .sidebar {
     transform: translateX(-100%);
   }
+
   body.sidebar-collapsed .main-content {
     margin-left: 0;
   }
@@ -540,6 +545,55 @@ a:hover {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.3px;
+}
+
+/* ── Soft Badges dengan Titik Indikator (Mirip Badge Tersedia) ── */
+.badge-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 50rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.badge-soft .badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.badge-soft-selesai {
+  background-color: #e6f4ea !important;
+  color: #137333 !important;
+}
+.badge-soft-selesai .badge-dot {
+  background-color: #137333 !important;
+}
+.badge-soft-ditolak {
+  background-color: #fce8e6 !important;
+  color: #c5221f !important;
+}
+.badge-soft-ditolak .badge-dot {
+  background-color: #c5221f !important;
+}
+.badge-soft-dipinjam {
+  background-color: #e8f0fe !important;
+  color: #1967d2 !important;
+}
+.badge-soft-dipinjam .badge-dot {
+  background-color: #1967d2 !important;
+}
+.badge-soft-menunggu {
+  background-color: #fef7e0 !important;
+  color: #b06000 !important;
+}
+.badge-soft-menunggu .badge-dot {
+  background-color: #b06000 !important;
 }
 
 .badge-available {
@@ -1374,12 +1428,29 @@ select.form-control {
   min-width: 36px;
 }
 
-.chart-bar-fill.bar-color-1 { background: linear-gradient(135deg, #4361ee, #6b7fff); }
-.chart-bar-fill.bar-color-2 { background: linear-gradient(135deg, #2ec4b6, #4dd8cc); }
-.chart-bar-fill.bar-color-3 { background: linear-gradient(135deg, #ff9f1c, #ffb84d); }
-.chart-bar-fill.bar-color-4 { background: linear-gradient(135deg, #e63946, #ff6b6b); }
-.chart-bar-fill.bar-color-5 { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
-.chart-bar-fill.bar-color-6 { background: linear-gradient(135deg, #0891b2, #22d3ee); }
+.chart-bar-fill.bar-color-1 {
+  background: linear-gradient(135deg, #4361ee, #6b7fff);
+}
+
+.chart-bar-fill.bar-color-2 {
+  background: linear-gradient(135deg, #2ec4b6, #4dd8cc);
+}
+
+.chart-bar-fill.bar-color-3 {
+  background: linear-gradient(135deg, #ff9f1c, #ffb84d);
+}
+
+.chart-bar-fill.bar-color-4 {
+  background: linear-gradient(135deg, #e63946, #ff6b6b);
+}
+
+.chart-bar-fill.bar-color-5 {
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+}
+
+.chart-bar-fill.bar-color-6 {
+  background: linear-gradient(135deg, #0891b2, #22d3ee);
+}
 
 .chart-bar-value {
   font-size: 0.78rem;
@@ -1464,8 +1535,13 @@ select.form-control {
   flex-shrink: 0;
 }
 
-.legend-dot.dot-available { background: var(--success); }
-.legend-dot.dot-borrowed  { background: var(--warning); }
+.legend-dot.dot-available {
+  background: var(--success);
+}
+
+.legend-dot.dot-borrowed {
+  background: var(--warning);
+}
 
 .donut-legend-item .legend-value {
   font-weight: 700;
@@ -1499,8 +1575,15 @@ select.form-control {
 }
 
 @media (max-width: 768px) {
-  .item-bar-name { width: 100px; font-size: 0.75rem; }
-  .chart-bar-label { width: 80px; font-size: 0.75rem; }
+  .item-bar-name {
+    width: 100px;
+    font-size: 0.75rem;
+  }
+
+  .chart-bar-label {
+    width: 80px;
+    font-size: 0.75rem;
+  }
 }
 
 .item-bar-track {
@@ -1545,10 +1628,12 @@ select.form-control {
   background: var(--warning-light);
   color: #d97706;
 }
+
 .badge-dikembalikan {
   background: var(--success-light);
   color: #0d9488;
 }
+
 .badge-terlambat {
   background: var(--danger-light);
   color: var(--danger);
@@ -1560,13 +1645,19 @@ select.form-control {
   background: linear-gradient(135deg, #fde8e8, #fecaca);
   color: #b91c1c;
 }
-.badge-role-admin i { margin-right: 2px; }
+
+.badge-role-admin i {
+  margin-right: 2px;
+}
 
 .badge-role-user {
   background: var(--primary-light);
   color: var(--primary);
 }
-.badge-role-user i { margin-right: 2px; }
+
+.badge-role-user i {
+  margin-right: 2px;
+}
 
 /* ── Code style in tables ── */
 .data-table code {
@@ -1585,6 +1676,7 @@ select.form-control {
 .page-heading {
   margin-bottom: 24px;
 }
+
 .page-heading h3 {
   font-size: 1.45rem;
   font-weight: 800;
@@ -1594,6 +1686,7 @@ select.form-control {
   align-items: center;
   gap: 10px;
 }
+
 .page-heading p {
   font-size: 0.88rem;
   color: var(--text-secondary);
@@ -1636,18 +1729,22 @@ select.form-control {
   background: #ebf3ff;
   color: #435ebe;
 }
+
 .stat-card .stat-icon.bg-success-light {
   background: #e8faf4;
   color: #5ddab4;
 }
+
 .stat-card .stat-icon.bg-warning-light {
   background: #fff7eb;
   color: #ffb848;
 }
+
 .stat-card .stat-icon.bg-danger-light {
   background: #ffecec;
   color: #ff7976;
 }
+
 .stat-card .stat-icon.bg-info-light {
   background: #ebf9fd;
   color: #57caeb;
@@ -1660,6 +1757,7 @@ select.form-control {
   line-height: 1.2;
   margin-bottom: 2px;
 }
+
 .stat-card .stat-info p {
   font-size: 0.8rem;
   font-weight: 600;
@@ -1668,6 +1766,7 @@ select.form-control {
   letter-spacing: 0.5px;
   margin: 0;
 }
+
 .stat-card .stat-badge {
   display: inline-block;
   margin-top: 4px;
@@ -1700,6 +1799,7 @@ select.form-control {
   justify-content: space-between;
   border-bottom: 1px solid var(--border-color);
 }
+
 .chart-card-header h4 {
   font-size: 1.05rem;
   font-weight: 700;
@@ -1709,6 +1809,7 @@ select.form-control {
   align-items: center;
   gap: 8px;
 }
+
 .chart-card-header .badge-year {
   background: #ebf3ff;
   color: #435ebe;
@@ -1725,6 +1826,7 @@ select.form-control {
   gap: 16px;
   padding: 8px 0;
 }
+
 .category-progress-item .cat-header {
   display: flex;
   justify-content: space-between;
@@ -1732,12 +1834,14 @@ select.form-control {
   font-weight: 600;
   margin-bottom: 6px;
 }
+
 .category-progress-item .cat-bar-bg {
   height: 8px;
   background: var(--body-bg);
   border-radius: 8px;
   overflow: hidden;
 }
+
 .category-progress-item .cat-bar-fill {
   height: 100%;
   border-radius: 8px;
@@ -1751,6 +1855,7 @@ select.form-control {
   align-items: center;
   gap: 10px;
 }
+
 .borrower-avatar {
   width: 32px;
   height: 32px;
@@ -1772,6 +1877,7 @@ select.form-control {
   overflow: visible;
   max-height: 95vh;
 }
+
 #profileModal .modal-header {
   padding: 18px 24px 14px;
   border-bottom: 1px solid var(--border-color);
@@ -1779,14 +1885,17 @@ select.form-control {
   align-items: center;
   justify-content: flex-start;
 }
+
 #profileModal .modal-header h3 {
   font-size: 1.15rem;
   font-weight: 700;
   margin: 0;
 }
+
 #profileModal .modal-body {
   padding: 20px 24px;
 }
+
 #profileModal .modal-footer {
   padding: 14px 24px;
   border-top: 1px solid var(--border-color);
@@ -1920,6 +2029,7 @@ select.form-control {
   color: #d32f3c;
   border-color: #ffd4d4;
 }
+
 .demo-chip.chip-admin:hover {
   background: #ffd4d4;
   transform: translateY(-1px);
@@ -1930,6 +2040,7 @@ select.form-control {
   color: #435ebe;
   border-color: #d1e2ff;
 }
+
 .demo-chip.chip-user:hover {
   background: #d1e2ff;
   transform: translateY(-1px);
@@ -1981,6 +2092,7 @@ input::-ms-clear {
   justify-content: center;
   transition: var(--transition);
 }
+
 .btn-toggle-password:hover {
   color: var(--primary);
 }
@@ -2004,6 +2116,7 @@ input::-ms-clear {
   align-items: center;
   gap: 6px;
 }
+
 .login-footer .link-back:hover {
   color: var(--primary);
 }
@@ -2013,10 +2126,12 @@ input::-ms-clear {
   color: #ff9997;
   margin-top: 8px;
 }
+
 .sidebar-nav .nav-link.btn-logout:hover {
   background: rgba(230, 57, 70, 0.15);
   color: #ffffff;
 }
+
 .sidebar-nav .nav-link.btn-logout i {
   color: #ff7976;
 }

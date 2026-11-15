@@ -558,17 +558,17 @@ function renderRecentLoansTable(loans) {
     let statusBadge = '';
     const st = l.status_pinjam;
     if (st === 'menunggu') {
-      statusBadge = '<span class="badge badge-warning"><i class="bi bi-hourglass-split"></i> Menunggu</span>';
+      statusBadge = '<span class="badge badge-soft badge-soft-menunggu" style="background-color:#fef7e0!important;color:#b06000!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#b06000!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Menunggu</span>';
     } else if (st === 'disetujui' || st === 'aktif') {
-      statusBadge = '<span class="badge badge-primary"><i class="bi bi-box-seam"></i> Sedang Dipinjam</span>';
+      statusBadge = '<span class="badge badge-soft badge-soft-dipinjam" style="background-color:#e8f0fe!important;color:#1967d2!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#1967d2!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Sedang Dipinjam</span>';
     } else if (st === 'selesai' || st === 'dikembalikan') {
-      statusBadge = '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Dikembalikan</span>';
+      statusBadge = '<span class="badge badge-soft badge-soft-selesai" style="background-color:#e6f4ea!important;color:#137333!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#137333!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Dikembalikan</span>';
     } else if (st === 'ditolak') {
-      statusBadge = '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Ditolak</span>';
+      statusBadge = '<span class="badge badge-soft badge-soft-ditolak" style="background-color:#fce8e6!important;color:#c5221f!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#c5221f!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Ditolak</span>';
     } else if (st === 'terlambat') {
-      statusBadge = '<span class="badge badge-danger"><i class="bi bi-exclamation-triangle-fill"></i> Terlambat</span>';
+      statusBadge = '<span class="badge badge-soft badge-soft-ditolak" style="background-color:#fce8e6!important;color:#c5221f!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#c5221f!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Terlambat</span>';
     } else {
-      statusBadge = `<span class="badge badge-primary">${escHtml(st)}</span>`;
+      statusBadge = `<span class="badge badge-soft badge-soft-dipinjam" style="background-color:#e8f0fe!important;color:#1967d2!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#1967d2!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> ${escHtml(st)}</span>`;
     }
 
     const initial = (l.nama_peminjam || 'A').charAt(0).toUpperCase();
@@ -915,17 +915,17 @@ function renderLoansTable() {
     let sBadge = '';
     const st = l.status_pinjam;
     if (st === 'menunggu') {
-      sBadge = '<span class="badge badge-warning"><i class="bi bi-hourglass-split"></i> Menunggu</span>';
+      sBadge = '<span class="badge badge-soft badge-soft-menunggu" style="background-color:#fef7e0!important;color:#b06000!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#b06000!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Menunggu</span>';
     } else if (st === 'disetujui' || st === 'aktif') {
-      sBadge = '<span class="badge badge-primary"><i class="bi bi-box-seam"></i> Sedang Dipinjam</span>';
+      sBadge = '<span class="badge badge-soft badge-soft-dipinjam" style="background-color:#e8f0fe!important;color:#1967d2!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#1967d2!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Sedang Dipinjam</span>';
     } else if (st === 'selesai' || st === 'dikembalikan') {
-      sBadge = '<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Selesai</span>';
+      sBadge = '<span class="badge badge-soft badge-soft-selesai" style="background-color:#e6f4ea!important;color:#137333!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#137333!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Selesai</span>';
     } else if (st === 'ditolak') {
-      sBadge = '<span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Ditolak</span>';
+      sBadge = '<span class="badge badge-soft badge-soft-ditolak" style="background-color:#fce8e6!important;color:#c5221f!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#c5221f!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Ditolak</span>';
     } else if (st === 'terlambat') {
-      sBadge = '<span class="badge badge-danger"><i class="bi bi-exclamation-triangle-fill"></i> Terlambat</span>';
+      sBadge = '<span class="badge badge-soft badge-soft-ditolak" style="background-color:#fce8e6!important;color:#c5221f!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#c5221f!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> Terlambat</span>';
     } else {
-      sBadge = `<span class="badge badge-primary">${escHtml(st)}</span>`;
+      sBadge = `<span class="badge badge-soft badge-soft-dipinjam" style="background-color:#e8f0fe!important;color:#1967d2!important;border-radius:50rem;padding:5px 14px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;"><span class="badge-dot" style="background-color:#1967d2!important;width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;"></span> ${escHtml(st)}</span>`;
     }
 
     const initial = (l.nama_peminjam || 'A').charAt(0).toUpperCase();
@@ -951,20 +951,9 @@ function renderLoansTable() {
             <i class="bi bi-arrow-return-left"></i> Selesai
           </button>
         </div>`;
-    } else if (st === 'ditolak') {
-      actionButtons = `
-        <div class="d-flex align-center gap-1 justify-center">
-          <span class="badge badge-danger" style="font-size:0.78rem;padding:5px 10px;">
-            <i class="bi bi-x-circle"></i> Ditolak
-          </span>
-        </div>`;
-    } else if (st === 'selesai' || st === 'dikembalikan') {
-      actionButtons = `
-        <div class="d-flex align-center gap-1 justify-center">
-          <span class="badge badge-success" style="font-size:0.78rem;padding:5px 10px;">
-            <i class="bi bi-check2-all"></i> Selesai
-          </span>
-        </div>`;
+    } else {
+      // Transaksi sudah final (selesai / ditolak): kosongkan aksi dengan tanda '-'
+      actionButtons = '<span style="color:var(--text-secondary);font-weight:700;font-size:0.95rem;">-</span>';
     }
 
     return `

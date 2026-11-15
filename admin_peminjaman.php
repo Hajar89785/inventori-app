@@ -51,6 +51,64 @@ try {
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Soft Badges dengan Titik Indikator (Mirip Badge Tersedia) ── */
+    .badge-soft {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 50rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .badge-soft .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* 1. Status Selesai */
+    .badge-soft-selesai {
+      background-color: #e6f4ea !important;
+      color: #137333 !important;
+    }
+    .badge-soft-selesai .badge-dot {
+      background-color: #137333 !important;
+    }
+
+    /* 2. Status Ditolak */
+    .badge-soft-ditolak {
+      background-color: #fce8e6 !important;
+      color: #c5221f !important;
+    }
+    .badge-soft-ditolak .badge-dot {
+      background-color: #c5221f !important;
+    }
+
+    /* 3. Status Sedang Dipinjam */
+    .badge-soft-dipinjam {
+      background-color: #e8f0fe !important;
+      color: #1967d2 !important;
+    }
+    .badge-soft-dipinjam .badge-dot {
+      background-color: #1967d2 !important;
+    }
+
+    /* 4. Status Menunggu */
+    .badge-soft-menunggu {
+      background-color: #fef7e0 !important;
+      color: #b06000 !important;
+    }
+    .badge-soft-menunggu .badge-dot {
+      background-color: #b06000 !important;
+    }
+  </style>
   <script>
     localStorage.setItem('invento_user', <?= json_encode($userJson) ?>);
   </script>
@@ -307,6 +365,6 @@ try {
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261116d"></script>
+  <script src="script.js?v=20261116g"></script>
 </body>
 </html>
