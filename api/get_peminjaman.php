@@ -29,6 +29,11 @@ try {
         $params[':id_barang'] = (int) $_GET['id_barang'];
     }
 
+    if (!empty($_GET['peminjam'])) {
+        $where[] = 'p.nama_peminjam = :peminjam';
+        $params[':peminjam'] = trim($_GET['peminjam']);
+    }
+
     if (!empty($where)) {
         $sql .= ' WHERE ' . implode(' AND ', $where);
     }

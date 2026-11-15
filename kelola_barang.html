@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INVENTO — Kelola Barang</title>
+  <!-- Google Fonts: Nunito (Mazer Standard Font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body id="adminPage" data-page="kelola">
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
+        <div><h1>INVENTO</h1><small>Inventaris Himpunan</small></div>
+      </div>
+      <nav class="sidebar-nav">
+        <!-- ── Menu Utama ── -->
+        <p class="nav-label">Menu Utama</p>
+        <ul style="list-style:none;padding:0;margin:0;">
+          <li class="nav-item"><a href="admin.html" class="nav-link"><i class="bi bi-grid-fill"></i> Dashboard</a></li>
+          <li class="nav-item"><a href="kelola_barang.html" class="nav-link active"><i class="bi bi-box-seam-fill"></i> Data Barang</a></li>
+          <li class="nav-item"><a href="peminjaman.html" class="nav-link"><i class="bi bi-arrow-left-right"></i> Peminjaman</a></li>
+        </ul>
+
+        <!-- ── Manajemen Akun ── -->
+        <p class="nav-label">Manajemen Akun</p>
+        <ul style="list-style:none;padding:0;margin:0;">
+          <li class="nav-item"><a href="manajemen_akun.html" class="nav-link"><i class="bi bi-people-fill"></i> Pengurus &amp; Anggota</a></li>
+          <li class="nav-item"><a href="javascript:void(0)" class="nav-link btn-open-profile" onclick="openProfileModal()"><i class="bi bi-person-gear"></i> Pengaturan Profil</a></li>
+          <li class="nav-item"><a href="javascript:void(0)" class="nav-link btn-logout" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> Keluar (Logout)</a></li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-user-card">
+        <div class="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="user-name">Admin Himpunan</div>
+          <span class="user-role">Pengurus Inti</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <p class="mb-0">&copy; 2026 INVENTO Himpunan</p>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <header class="top-navbar">
+        <div class="d-flex align-center gap-2">
+          <button class="btn-sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+          <span class="page-title"><i class="bi bi-box-seam-fill" style="color:var(--primary);"></i>&nbsp; Data Barang Inventaris</span>
+        </div>
+        <div class="navbar-actions">
+          <div class="search-box"><i class="bi bi-search"></i><input type="text" id="adminSearchInput" placeholder="Cari nama atau kategori barang..."></div>
+          <div class="user-avatar" title="Admin" onclick="openProfileModal()" style="cursor:pointer;">A</div>
+        </div>
+      </header>
+
+      <main class="content-body">
+        <section class="stat-cards" style="margin-bottom:24px;">
+          <div class="stat-card"><div class="stat-icon bg-primary-light"><i class="bi bi-box-seam"></i></div><div class="stat-info"><h3 id="statTotal">—</h3><p>Total Barang</p></div></div>
+          <div class="stat-card"><div class="stat-icon bg-success-light"><i class="bi bi-check-circle"></i></div><div class="stat-info"><h3 id="statAvailable">—</h3><p>Tersedia</p></div></div>
+          <div class="stat-card"><div class="stat-icon bg-warning-light"><i class="bi bi-arrow-left-right"></i></div><div class="stat-info"><h3 id="statBorrowed">—</h3><p>Dipinjam</p></div></div>
+          <div class="stat-card"><div class="stat-icon bg-danger-light"><i class="bi bi-tags"></i></div><div class="stat-info"><h3 id="statCategories">—</h3><p>Kategori</p></div></div>
+        </section>
+
+        <section class="card-section">
+          <div class="card-header">
+            <h2><i class="bi bi-table"></i> Daftar Barang</h2>
+            <button class="btn btn-primary" id="btnAddItem"><i class="bi bi-plus-lg"></i> Tambah Barang</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead><tr><th style="width:50px;">No</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Status</th><th style="width:120px;">Aksi</th></tr></thead>
+                <tbody id="itemsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="app-footer">INVENTO &copy; 2026 &mdash; Sistem Inventaris &amp; Peminjaman Barang</footer>
+    </div>
+  </div>
+
+  <!-- Add/Edit Item Modal -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="itemModalTitle">Tambah Barang Baru</h3>
+        <button class="modal-close" id="itemModalClose">&times;</button>
+      </div>
+      <form id="itemForm" novalidate>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="inputName">Nama Barang <span style="color:var(--danger);">*</span></label>
+            <input type="text" class="form-control" id="inputName" placeholder="Contoh: Laptop ASUS VivoBook">
+            <div class="form-error"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inputCategory">Kategori <span style="color:var(--danger);">*</span></label>
+              <select class="form-control" id="inputCategory">
+                <option value="">-- Pilih Kategori --</option>
+                <option value="Elektronik">Elektronik</option>
+                <option value="Furnitur">Furnitur</option>
+                <option value="Perlengkapan">Perlengkapan</option>
+                <option value="Outdoor">Outdoor</option>
+                <option value="Kendaraan">Kendaraan</option>
+                <option value="Olahraga">Olahraga</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+              <div class="form-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="inputStock">Jumlah Stok <span style="color:var(--danger);">*</span></label>
+              <input type="number" class="form-control" id="inputStock" min="1" placeholder="Contoh: 5">
+              <div class="form-error"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="inputIcon">Ikon</label>
+            <select class="form-control" id="inputIcon">
+              <option value="bi-box">📦 Kotak (Default)</option>
+              <option value="bi-laptop">💻 Laptop</option><option value="bi-projector">📽️ Proyektor</option>
+              <option value="bi-camera">📷 Kamera</option><option value="bi-printer">🖨️ Printer</option>
+              <option value="bi-speaker">🔊 Speaker</option><option value="bi-tools">🔧 Peralatan</option>
+              <option value="bi-easel">📋 Whiteboard</option><option value="bi-house">🏕️ Tenda</option>
+              <option value="bi-grid-3x3-gap">🪑 Meja</option><option value="bi-border-style">🪑 Kursi</option>
+              <option value="bi-truck">🚛 Kendaraan</option><option value="bi-dribbble">⚽ Olahraga</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputDesc">Deskripsi</label>
+            <textarea class="form-control" id="inputDesc" rows="2" placeholder="Deskripsi singkat..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="itemModalCancel">Batal</button>
+          <button type="submit" class="btn btn-primary" id="itemSubmitBtn">Simpan Barang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Pengaturan Profil Pengurus ═══ -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Pengurus</h3>
+      </div>
+      <form id="profileForm" onsubmit="handleProfileSave(event)">
+        <div class="modal-body">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div class="user-avatar" style="width:68px;height:68px;font-size:1.6rem;margin:0 auto 10px;background:linear-gradient(135deg,var(--primary),#57caeb);">
+              A
+            </div>
+            <h4 style="font-size:1.05rem;margin-bottom:2px;">Administrator Himpunan</h4>
+            <span class="badge badge-role-admin"><i class="bi bi-shield-lock-fill"></i> Pengurus / Admin</span>
+          </div>
+
+          <div class="form-group">
+            <label for="profNama">Nama Lengkap Pengurus</label>
+            <input type="text" class="form-control" id="profNama" value="Administrator">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="profUser">Username</label>
+              <input type="text" class="form-control" id="profUser" value="admin" readonly style="background:#f8fafc;">
+            </div>
+            <div class="form-group">
+              <label for="profEmail">Email Himpunan</label>
+              <input type="email" class="form-control" id="profEmail" value="admin@invento.local">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="profPass">Password Baru (opsional)</label>
+            <input type="password" class="form-control" id="profPass" placeholder="Kosongkan jika tidak ingin mengubah password">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeProfileModal()">Tutup</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
