@@ -196,10 +196,12 @@ window.openProfileModal = function() {
       const userInp = document.getElementById('profUser');
       const emailInp = document.getElementById('profEmail');
       const passInp = document.getElementById('profPass');
+      const passConfirmInp = document.getElementById('profPassConfirm');
       if (namaInp) namaInp.value = u.nama_lengkap || '';
       if (userInp) userInp.value = u.username || '';
       if (emailInp) emailInp.value = u.email || '';
       if (passInp) passInp.value = '';
+      if (passConfirmInp) passConfirmInp.value = '';
 
       const modalTitle = document.getElementById('modalProfName');
       if (modalTitle) modalTitle.textContent = u.nama_lengkap || 'Pengguna';
@@ -235,10 +237,19 @@ window.handleProfileSave = async function(e) {
   const nama = document.getElementById('profNama')?.value.trim();
   const email = document.getElementById('profEmail')?.value.trim() || '';
   const pass = document.getElementById('profPass')?.value.trim() || '';
+  const passConfirm = document.getElementById('profPassConfirm')?.value.trim() || '';
 
   if (!nama) {
     showToast('Nama lengkap tidak boleh kosong.', 'danger');
     return;
+  }
+
+  // Validasi konfirmasi password
+  if (pass !== '' || passConfirm !== '') {
+    if (pass !== passConfirm) {
+      showToast('Konfirmasi password tidak cocok!', 'danger');
+      return;
+    }
   }
 
   try {
@@ -250,8 +261,9 @@ window.handleProfileSave = async function(e) {
       role: u.role,
       status: u.status || 'aktif'
     };
-    if (pass) {
+    if (pass !== '') {
       payload.password = pass;
+      payload.konfirmasi_password = passConfirm;
     }
 
     const r = await apiPost('api/update_akun.php', payload);

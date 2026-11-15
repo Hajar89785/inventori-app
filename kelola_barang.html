@@ -185,10 +185,19 @@
               <input type="email" class="form-control" id="profEmail" value="admin@invento.local">
             </div>
           </div>
-          <div class="form-group">
-            <label for="profPass">Password Baru (opsional)</label>
-            <input type="password" class="form-control" id="profPass" placeholder="Kosongkan jika tidak ingin mengubah password">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="profPass">Password Baru</label>
+              <input type="password" class="form-control" id="profPass" name="password" placeholder="Masukkan password baru...">
+            </div>
+            <div class="form-group">
+              <label for="profPassConfirm">Konfirmasi Password Baru</label>
+              <input type="password" class="form-control" id="profPassConfirm" name="konfirmasi_password" placeholder="Ulangi password baru...">
+            </div>
           </div>
+          <small class="text-muted" style="display:block;margin-top:-6px;margin-bottom:16px;font-size:0.8rem;color:#718096;">
+            <em>*(Kosongkan kedua kolom jika tidak ingin mengubah password)*</em>
+          </small>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick="closeProfileModal()">Tutup</button>
@@ -198,6 +207,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=20261116i"></script>
 </body>
 </html>

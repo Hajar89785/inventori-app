@@ -28,6 +28,18 @@ if ($nama === '')     $errors[] = 'Nama lengkap wajib diisi.';
 if ($username === '') $errors[] = 'Username wajib diisi.';
 if (!empty($errors)) jsonResponse(false, implode(' ', $errors), null, 422);
 
+// Validasi Password Baru & Konfirmasi Password Baru
+$rawPass     = isset($input['password']) ? trim((string)$input['password']) : '';
+$confirmPass = isset($input['konfirmasi_password']) ? trim((string)$input['konfirmasi_password']) : (isset($input['password_confirmation']) ? trim((string)$input['password_confirmation']) : null);
+
+if ($confirmPass !== null) {
+    if ($rawPass !== '' || $confirmPass !== '') {
+        if ($rawPass !== $confirmPass) {
+            jsonResponse(false, 'Konfirmasi password tidak cocok!', null, 422);
+        }
+    }
+}
+
 try {
     $existing = $pdo->prepare('SELECT * FROM akun WHERE id = :id');
     $existing->execute([':id' => $id]);
@@ -80,7 +92,19 @@ try {
     $stmt = $pdo->prepare('SELECT id, nama_lengkap, username, email, role, status, created_at, updated_at FROM akun WHERE id = :id');
     $stmt->execute([':id' => $id]);
 
-    jsonResponse(true, 'Akun berhasil diperbarui!', $stmt->fetch());
+    $updatedData = $stmt->fetch();
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (isset($_SESSION['invento_user']) && (int)($_SESSION['invento_user']['id'] ?? 0) === $id) {
+        $_SESSION['invento_user']['nama_lengkap'] = $updatedData['nama_lengkap'] ?? $nama;
+        $_SESSION['invento_user']['username']     = $updatedData['username'] ?? $username;
+        $_SESSION['invento_user']['email']        = $updatedData['email'] ?? $email;
+        if (!empty($updatedData['role'])) $_SESSION['invento_user']['role'] = $updatedData['role'];
+    }
+
+    jsonResponse(true, 'Akun berhasil diperbarui!', $updatedData);
 
 } catch (PDOException $e) {
     jsonResponse(false, 'Gagal memperbarui akun: ' . $e->getMessage(), null, 500);
