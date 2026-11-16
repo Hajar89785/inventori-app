@@ -1,14 +1,13 @@
 <?php
 /**
  * ========================================================
- * INVENTO — Halaman Login (Split-Screen Layout)
+ * INVENTO — Halaman Masuk (Login) & Daftar Akun (Register)
  * ========================================================
  * 
- * - Desain Split-screen: Form kiri bersih, Logo INVENTO kanan.
- * - Form hanya Email, Password, dan tombol Masuk (tanpa dropdown "Login Sebagai").
- * - Role diverifikasi otomatis dari tabel `users` (atau `akun`).
- * - Jika role == 'admin' -> arahkan ke admin_dashboard.php
- * - Jika role == 'user'  -> arahkan ke user_katalog.php
+ * - Desain Split-Screen Elegan & Minimalis
+ * - Pilihan Akses Clean: Tab Switcher "Masuk" dan "Daftar Akun"
+ * - Form Langsung To-The-Point tanpa teks basa-basi yang berlebihan
+ * - Eksekusi Registrasi & Login langsung ke database tanpa transisi rumit
  */
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -18,10 +17,17 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/app_settings.php';
 $settings = getAppSettings($pdo);
 
-$error = '';
-$emailInput = '';
+$error       = '';
+$success     = '';
+$activeTab   = 'login';
 
-// Jika sudah memiliki sesi login aktif, langsung arahkan ke dashboard yang sesuai
+// Input memory untuk form
+$loginInput       = '';
+$regNamaInput     = '';
+$regUserInput     = '';
+$regEmailInput    = '';
+
+// Jika sudah memiliki sesi login aktif, langsung arahkan ke portal yang sesuai
 if (isset($_SESSION['invento_logged_in']) && $_SESSION['invento_logged_in'] === true) {
     if (isset($_SESSION['invento_user']['role']) && $_SESSION['invento_user']['role'] === 'admin') {
         header('Location: admin_dashboard.php');
@@ -32,77 +38,175 @@ if (isset($_SESSION['invento_logged_in']) && $_SESSION['invento_logged_in'] === 
     }
 }
 
-// Proses submit form login
+// Proses submit form (Login atau Register)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = trim($_POST['password'] ?? '');
-    $emailInput = $email;
+    $action = trim($_POST['auth_action'] ?? 'login');
 
-    if ($email === '' || $password === '') {
-        $error = 'Email/Username dan Password wajib diisi.';
-    } else {
-        try {
-            // Cek di tabel akun (atau fallback tabel users)
-            $user = null;
+    if ($action === 'register') {
+        // ─── PROSES PENDAFTARAN AKUN BARU ──────────────────
+        $activeTab       = 'register';
+        $nama            = trim($_POST['reg_nama'] ?? $_POST['nama_lengkap'] ?? '');
+        $username        = trim($_POST['reg_username'] ?? $_POST['username'] ?? '');
+        $email           = trim($_POST['email'] ?? $_POST['reg_email'] ?? '');
+        $password        = trim($_POST['reg_password'] ?? $_POST['password'] ?? '');
+        $konfirmasiPass  = trim($_POST['reg_password_confirm'] ?? $_POST['konfirmasi_password'] ?? '');
+
+        $regNamaInput    = $nama;
+        $regUserInput    = $username;
+        $regEmailInput   = $email;
+
+        // Auto-derive username jika kosong tapi email diisi
+        if ($username === '' && $email !== '') {
+            $parts = explode('@', $email);
+            $username = preg_replace('/[^a-zA-Z0-9_]/', '', $parts[0]);
+        }
+
+        // Validasi Ketat Backend
+        if ($nama === '') {
+            $error = 'Nama lengkap wajib diisi.';
+        } elseif (empty($email)) {
+            $error = 'Email anggota wajib diisi.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Format email tidak valid. Pastikan penulisan email benar (contoh: nama@email.com).';
+        } elseif ($username === '') {
+            $error = 'Username wajib diisi.';
+        } elseif (strlen($username) < 3) {
+            $error = 'Username minimal 3 karakter.';
+        } elseif ($password === '') {
+            $error = 'Password baru wajib diisi.';
+        } elseif (strlen($password) < 4) {
+            $error = 'Password minimal 4 karakter.';
+        } elseif ($password !== $konfirmasiPass) {
+            $error = 'Konfirmasi password tidak cocok! Pastikan kedua kolom password sama.';
+        } else {
             try {
-                $stmt = $pdo->prepare('
-                    SELECT id, nama_lengkap, username, email, password, role, status
-                    FROM akun
-                    WHERE email = :val1 OR username = :val2
-                    LIMIT 1
-                ');
-                $stmt->execute([':val1' => $email, ':val2' => $email]);
-                $user = $stmt->fetch();
-            } catch (PDOException $e) {
-                // Fallback jika tabel bernama users
-                $stmt = $pdo->prepare('
-                    SELECT id, nama_lengkap, username, email, password, role, status
-                    FROM users
-                    WHERE email = :val1 OR username = :val2
-                    LIMIT 1
-                ');
-                $stmt->execute([':val1' => $email, ':val2' => $email]);
-                $user = $stmt->fetch();
-            }
-
-            if (!$user) {
-                $error = 'Email atau Username tidak terdaftar dalam sistem.';
-            } else {
-                // Verifikasi password (hash atau plain fallback)
-                $passwordValid = false;
-                if (!empty($user['password']) && password_verify($password, $user['password'])) {
-                    $passwordValid = true;
-                } elseif ($password === $user['password']) {
-                    $passwordValid = true;
-                }
-
-                if (!$passwordValid) {
-                    $error = 'Password yang Anda masukkan salah. Silakan coba lagi.';
-                } elseif (isset($user['status']) && $user['status'] !== 'aktif') {
-                    $error = 'Akun Anda sedang dinonaktifkan. Silakan hubungi pengurus himpunan.';
+                // Cek duplikasi username
+                $checkUser = $pdo->prepare('SELECT id FROM akun WHERE username = :u LIMIT 1');
+                $checkUser->execute([':u' => $username]);
+                if ($checkUser->fetch()) {
+                    $error = "Username \"$username\" sudah digunakan. Silakan pilih username lain.";
                 } else {
-                    // Login Berhasil! Set Sesi
-                    $_SESSION['invento_logged_in'] = true;
-                    $_SESSION['invento_user'] = [
-                        'id'           => (int) $user['id'],
-                        'nama_lengkap' => $user['nama_lengkap'],
-                        'username'     => $user['username'],
-                        'email'        => $user['email'],
-                        'role'         => $user['role'],
-                    ];
+                    // Cek duplikasi email jika diisi
+                    $emailExists = false;
+                    if ($email !== '') {
+                        $checkEmail = $pdo->prepare('SELECT id FROM akun WHERE email = :e LIMIT 1');
+                        $checkEmail->execute([':e' => $email]);
+                        if ($checkEmail->fetch()) {
+                            $emailExists = true;
+                        }
+                    }
 
-                    // Arahkan otomatis berdasarkan role dari database
-                    if ($user['role'] === 'admin') {
-                        header('Location: admin_dashboard.php');
-                        exit;
+                    if ($emailExists) {
+                        $error = "Email \"$email\" sudah terdaftar. Silakan pilih tab Masuk.";
                     } else {
+                        // Hash password
+                        $hashedPass = password_hash($password, PASSWORD_DEFAULT);
+
+                        // Coba simpan ke tabel akun
+                        try {
+                            $stmt = $pdo->prepare('
+                                INSERT INTO akun (nama_lengkap, username, email, password, plain_password, role, status)
+                                VALUES (:nama, :username, :email, :password, :plain, \'user\', \'aktif\')
+                            ');
+                            $stmt->execute([
+                                ':nama'     => $nama,
+                                ':username' => $username,
+                                ':email'    => $email,
+                                ':password' => $hashedPass,
+                                ':plain'    => $password,
+                            ]);
+                        } catch (PDOException $e) {
+                            $stmt = $pdo->prepare('
+                                INSERT INTO akun (nama_lengkap, username, email, password, role, status)
+                                VALUES (:nama, :username, :email, :password, \'user\', \'aktif\')
+                            ');
+                            $stmt->execute([
+                                ':nama'     => $nama,
+                                ':username' => $username,
+                                ':email'    => $email,
+                                ':password' => $hashedPass,
+                            ]);
+                        }
+
+                        $newId = (int) $pdo->lastInsertId();
+
+                        // Langsung buat sesi aktif dan masuk tanpa halaman jeda
+                        $_SESSION['invento_logged_in'] = true;
+                        $_SESSION['invento_user'] = [
+                            'id'           => $newId,
+                            'nama_lengkap' => $nama,
+                            'username'     => $username,
+                            'email'        => $email,
+                            'role'         => 'user',
+                        ];
+
                         header('Location: user_katalog.php');
                         exit;
                     }
                 }
+            } catch (PDOException $e) {
+                $error = 'Terjadi kesalahan sistem saat mendaftar: ' . $e->getMessage();
             }
-        } catch (PDOException $e) {
-            $error = 'Terjadi kesalahan pada database: ' . $e->getMessage();
+        }
+
+    } else {
+        // ─── PROSES LOGIN MASUK ───────────────────────────
+        $activeTab   = 'login';
+        $userKey     = trim($_POST['email'] ?? '');
+        $password    = trim($_POST['password'] ?? '');
+        $loginInput  = $userKey;
+
+        if ($userKey === '' || $password === '') {
+            $error = 'Email/Username dan Password wajib diisi.';
+        } else {
+            try {
+                $stmt = $pdo->prepare('
+                    SELECT id, nama_lengkap, username, email, password, role, status
+                    FROM akun
+                    WHERE email = :v1 OR username = :v2
+                    LIMIT 1
+                ');
+                $stmt->execute([':v1' => $userKey, ':v2' => $userKey]);
+                $user = $stmt->fetch();
+
+                if (!$user) {
+                    $error = 'Email atau Username tidak terdaftar dalam sistem.';
+                } else {
+                    $passwordValid = false;
+                    if (!empty($user['password']) && password_verify($password, $user['password'])) {
+                        $passwordValid = true;
+                    } elseif ($password === $user['password']) {
+                        $passwordValid = true;
+                    }
+
+                    if (!$passwordValid) {
+                        $error = 'Password yang Anda masukkan salah. Silakan coba lagi.';
+                    } elseif (isset($user['status']) && $user['status'] !== 'aktif') {
+                        $error = 'Akun Anda sedang dinonaktifkan. Silakan hubungi pengurus himpunan.';
+                    } else {
+                        // Login Berhasil -> Set Sesi
+                        $_SESSION['invento_logged_in'] = true;
+                        $_SESSION['invento_user'] = [
+                            'id'           => (int) $user['id'],
+                            'nama_lengkap' => $user['nama_lengkap'],
+                            'username'     => $user['username'],
+                            'email'        => $user['email'],
+                            'role'         => $user['role'],
+                        ];
+
+                        // Arahkan otomatis berdasarkan role
+                        if ($user['role'] === 'admin') {
+                            header('Location: admin_dashboard.php');
+                            exit;
+                        } else {
+                            header('Location: user_katalog.php');
+                            exit;
+                        }
+                    }
+                }
+            } catch (PDOException $e) {
+                $error = 'Terjadi kesalahan koneksi database: ' . $e->getMessage();
+            }
         }
     }
 }
@@ -112,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= htmlspecialchars($settings['app_name']) ?> — Masuk ke Sistem Inventaris</title>
+  <title><?= htmlspecialchars($settings['app_name']) ?> &mdash; Akses Masuk &amp; Pendaftaran</title>
   <!-- Google Fonts: Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -126,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin: 0;
       padding: 0;
       font-family: 'Nunito', sans-serif;
-      background: #ffffff;
+      background: #f8fafc;
       color: var(--text-main);
       overflow-x: hidden;
     }
@@ -137,11 +241,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 100%;
     }
 
-    /* Sisi Kiri (Form) */
+    /* Sisi Kiri (Form Area) */
     .split-form-side {
       flex: 1;
-      max-width: 560px;
-      padding: 48px 56px;
+      max-width: 540px;
+      padding: 40px 48px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -150,88 +254,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       z-index: 2;
     }
 
+    /* Brand Header Minimalis */
     .split-brand-header {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .split-brand-icon {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 12px;
       background: linear-gradient(135deg, #435ebe 0%, #25396f 100%);
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
-      box-shadow: 0 4px 12px rgba(67, 94, 190, 0.3);
+      font-size: 1.35rem;
+      box-shadow: 0 4px 12px rgba(67, 94, 190, 0.25);
+      flex-shrink: 0;
     }
 
     .split-brand-text h1 {
       margin: 0;
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: 0.5px;
-      color: var(--text-main);
+      color: #1e293b;
       line-height: 1.2;
     }
 
     .split-brand-text small {
       font-size: 0.78rem;
-      color: var(--text-secondary);
+      color: #64748b;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
 
-    .split-welcome h2 {
-      font-size: 1.75rem;
+    /* Tab Switcher: Masuk vs Daftar Akun */
+    .auth-tab-switcher {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+      position: relative;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
+    }
+
+    .auth-tab-btn.active {
+      background: #ffffff;
+      color: #435ebe;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .auth-tab-btn:hover:not(.active) {
+      color: #1e293b;
+    }
+
+    /* Keterangan Form Ringkas Tanpa Basa-Basi */
+    .auth-header-desc {
+      margin-bottom: 18px;
+    }
+
+    .auth-title {
+      font-size: 1.3rem;
       font-weight: 800;
       color: #1e293b;
-      margin: 0 0 8px;
+      margin: 0 0 4px;
     }
 
-    .split-welcome p {
-      font-size: 0.92rem;
+    .auth-subtitle {
+      font-size: 0.88rem;
       color: #64748b;
-      margin: 0 0 24px;
-      line-height: 1.5;
+      margin: 0;
+      line-height: 1.4;
     }
 
-    /* Alert Pesan Error */
+    /* Alert Pesan Error & Sukses */
     .alert-error {
       background: #fef2f2;
       border: 1px solid #fecaca;
       color: #b91c1c;
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-radius: 10px;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 22px;
-      animation: shake 0.4s ease-in-out;
+      margin-bottom: 18px;
+      animation: shake 0.35s ease-in-out;
+    }
+
+    .alert-success {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #15803d;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-6px); }
-      40%, 80% { transform: translateX(6px); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
     }
 
+    /* Form Styles */
     .split-form .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .split-form label {
       display: block;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       font-weight: 700;
       color: #334155;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .split-form .input-icon-wrapper {
@@ -244,18 +408,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       position: absolute;
       left: 14px;
       color: #94a3b8;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       pointer-events: none;
     }
 
     .split-form .form-control {
       width: 100%;
-      height: 48px;
-      padding: 10px 44px 10px 42px;
-      font-size: 0.92rem;
+      height: 44px;
+      padding: 8px 40px 8px 38px;
+      font-size: 0.9rem;
       font-family: inherit;
       border: 1.5px solid #cbd5e1;
-      border-radius: 10px;
+      border-radius: 9px;
       background: #f8fafc;
       color: #1e293b;
       transition: all 0.2s ease;
@@ -271,11 +435,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .split-form .btn-toggle-password {
       position: absolute;
-      right: 12px;
+      right: 10px;
       background: transparent;
       border: none;
       color: #94a3b8;
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       cursor: pointer;
       padding: 6px;
       display: flex;
@@ -288,14 +452,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       color: #435ebe;
     }
 
-    .btn-submit-login {
+    /* 2-Kolom Berdampingan untuk Form Ringkas */
+    .form-row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .form-row-2col .form-group {
+      margin-bottom: 0;
+    }
+
+    /* Tombol Aksi */
+    .btn-submit-auth {
       width: 100%;
-      height: 50px;
+      height: 46px;
       background: linear-gradient(135deg, #435ebe 0%, #25396f 100%);
       color: #ffffff;
       border: none;
-      border-radius: 10px;
-      font-size: 1rem;
+      border-radius: 9px;
+      font-size: 0.95rem;
       font-weight: 700;
       letter-spacing: 0.3px;
       cursor: pointer;
@@ -303,48 +480,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 14px rgba(67, 94, 190, 0.35);
+      box-shadow: 0 4px 12px rgba(67, 94, 190, 0.3);
       transition: all 0.2s ease;
-      margin-top: 10px;
+      margin-top: 6px;
     }
 
-    .btn-submit-login:hover {
+    .btn-submit-auth:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(67, 94, 190, 0.45);
+      box-shadow: 0 6px 16px rgba(67, 94, 190, 0.4);
       background: linear-gradient(135deg, #374fc7 0%, #1e2d5a 100%);
     }
 
-    .btn-submit-login:active {
+    .btn-submit-auth:active {
       transform: translateY(0);
     }
 
     /* Demo Quick Fill Chips */
     .split-demo-chips {
-      margin-top: 24px;
-      padding-top: 20px;
+      margin-top: 18px;
+      padding-top: 16px;
       border-top: 1px dashed #e2e8f0;
     }
 
     .split-demo-chips span {
       display: block;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: #64748b;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       font-weight: 600;
     }
 
     .demo-btn-group {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .chip-demo {
       background: #f1f5f9;
       border: 1px solid #cbd5e1;
-      padding: 6px 12px;
+      padding: 5px 12px;
       border-radius: 20px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 700;
       color: #475569;
       cursor: pointer;
@@ -360,10 +537,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       border-color: #94a3b8;
     }
 
-    /* Sisi Kanan (Logo & Brand Image) */
+    /* ═══ Sisi Kanan: Visual Branding Split-Screen ═══ */
     .split-logo-side {
-      flex: 1.2;
-      background: linear-gradient(145deg, #0f172a 0%, #172554 50%, #1e293b 100%);
+      flex: 1.15;
+      background: linear-gradient(145deg, #090e1a 0%, #111b33 50%, #1e293b 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -379,10 +556,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .split-logo-side::before {
       content: '';
       position: absolute;
-      width: 450px;
-      height: 450px;
+      width: 480px;
+      height: 480px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(67, 94, 190, 0.25) 0%, rgba(0,0,0,0) 70%);
+      background: radial-gradient(circle, rgba(67, 94, 190, 0.3) 0%, rgba(0,0,0,0) 70%);
       top: 10%;
       right: -100px;
       pointer-events: none;
@@ -410,52 +587,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .invento-logo-img {
-      width: 240px;
+      width: 200px;
       max-width: 80%;
       border-radius: 20px;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 28px;
+      margin-bottom: 24px;
       transition: transform 0.3s ease;
     }
 
     .invento-logo-img:hover {
-      transform: scale(1.03);
+      transform: scale(1.02);
     }
 
     .logo-card-container h3 {
-      font-size: 1.5rem;
+      font-size: 1.45rem;
       font-weight: 800;
       letter-spacing: 0.5px;
-      margin: 0 0 12px;
+      margin: 0 0 10px;
       color: #ffffff;
     }
 
     .logo-card-container p {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       color: #94a3b8;
       line-height: 1.6;
-      margin: 0;
+      margin: 0 0 24px;
+    }
+
+    .brand-features-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .brand-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     /* Responsif */
-    @media (max-width: 900px) {
+    @media (max-width: 860px) {
       .split-wrapper {
         flex-direction: column;
       }
       .split-form-side {
         max-width: 100%;
-        padding: 36px 24px;
+        padding: 32px 20px;
         order: 2;
       }
       .split-logo-side {
         flex: none;
-        padding: 40px 20px;
+        padding: 36px 20px;
         order: 1;
       }
       .invento-logo-img {
-        width: 160px;
-        margin-bottom: 16px;
+        width: 140px;
+        margin-bottom: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .form-row-2col {
+        grid-template-columns: 1fr;
+        gap: 14px;
       }
     }
   </style>
@@ -464,8 +667,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="split-wrapper">
     
-    <!-- ═══ SISI KIRI: Form Login Bersih ═══ -->
+    <!-- ═══ SISI KIRI: Formulir Bersih & Ringkas ═══ -->
     <div class="split-form-side">
+      <!-- Brand Header -->
       <div class="split-brand-header">
         <div class="split-brand-icon">
           <?= renderBrandLogoHtml($settings['app_logo']) ?>
@@ -476,32 +680,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       </div>
 
-      <div class="split-welcome">
-        <h2>Selamat Datang Kembali 👋</h2>
-        <p>Silakan masukkan akun Anda untuk mengakses sistem inventaris dan peminjaman.</p>
+      <!-- Segmented Tab Switcher (Masuk vs Daftar Akun) -->
+      <div class="auth-tab-switcher" role="tablist">
+        <button 
+          type="button" 
+          class="auth-tab-btn <?= $activeTab === 'login' ? 'active' : '' ?>" 
+          id="tabLoginBtn" 
+          onclick="switchAuthTab('login')"
+        >
+          <i class="bi bi-box-arrow-in-right"></i> Masuk
+        </button>
+        <button 
+          type="button" 
+          class="auth-tab-btn <?= $activeTab === 'register' ? 'active' : '' ?>" 
+          id="tabRegisterBtn" 
+          onclick="switchAuthTab('register')"
+        >
+          <i class="bi bi-person-plus-fill"></i> Daftar Akun
+        </button>
       </div>
 
-      <!-- Pesan Kesalahan Autentikasi -->
+      <!-- Ringkasan Singkat Tanpa Basa-Basi -->
+      <div class="auth-header-desc">
+        <h2 class="auth-title" id="authTitle">
+          <?= $activeTab === 'register' ? 'Buat Akun Baru' : 'Masuk ke Akun' ?>
+        </h2>
+        <p class="auth-subtitle" id="authSubtitle">
+          <?= $activeTab === 'register' 
+            ? 'Lengkapi data singkat berikut untuk mendaftar akun anggota.' 
+            : 'Masukkan data Anda untuk mengakses sistem inventaris.' ?>
+        </p>
+      </div>
+
+      <!-- Pesan Kesalahan / Notifikasi -->
       <?php if (!empty($error)): ?>
-        <div class="alert-error">
-          <i class="bi bi-exclamation-triangle-fill" style="font-size:1.15rem;"></i>
+        <div class="alert-error" id="authAlertError">
+          <i class="bi bi-exclamation-triangle-fill" style="font-size:1.1rem;flex-shrink:0;"></i>
           <span><?= htmlspecialchars($error) ?></span>
         </div>
       <?php endif; ?>
 
-      <!-- Form Login (Hanya Email & Password, TANPA Dropdown "Login Sebagai") -->
-      <form action="login.php" method="POST" class="split-form" novalidate>
+      <!-- ════════ FORM 1: MASUK (LOGIN) ════════ -->
+      <form 
+        action="login.php" 
+        method="POST" 
+        class="split-form" 
+        id="formLogin" 
+        style="<?= $activeTab === 'login' ? '' : 'display:none;' ?>"
+      >
+        <input type="hidden" name="auth_action" value="login">
+
         <div class="form-group">
-          <label for="email">Email atau Username</label>
+          <label for="loginEmail">Email atau Username</label>
           <div class="input-icon-wrapper">
             <i class="bi bi-person input-icon"></i>
             <input 
               type="text" 
               name="email" 
-              id="email" 
+              id="loginEmail" 
               class="form-control" 
               placeholder="nama@email.com atau username" 
-              value="<?= htmlspecialchars($emailInput) ?>" 
+              value="<?= htmlspecialchars($loginInput) ?>" 
               required 
               autofocus
             >
@@ -509,75 +748,258 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="form-group">
-          <label for="password">Password</label>
+          <label for="loginPassword">Password</label>
           <div class="input-icon-wrapper">
             <i class="bi bi-lock input-icon"></i>
             <input 
               type="password" 
               name="password" 
-              id="password" 
+              id="loginPassword" 
               class="form-control" 
               placeholder="Masukkan password Anda" 
               required
             >
-            <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility()" title="Lihat/Sembunyikan Password">
-              <i class="bi bi-eye" id="eyeIcon"></i>
+            <button 
+              type="button" 
+              class="btn-toggle-password" 
+              onclick="togglePasswordVisibility('loginPassword', 'eyeIconLogin')" 
+              title="Lihat/Sembunyikan Password"
+            >
+              <i class="bi bi-eye" id="eyeIconLogin"></i>
             </button>
           </div>
         </div>
 
-        <button type="submit" name="login" class="btn-submit-login">
+        <button type="submit" name="submit_login" class="btn-submit-auth">
           <i class="bi bi-box-arrow-in-right"></i> Masuk Sekarang
         </button>
+
+        <!-- Akses Cepat Demo -->
+        <div class="split-demo-chips">
+          <span><i class="bi bi-lightning-charge-fill" style="color:#eab308;"></i> Akses Cepat (Klik untuk isi formulir):</span>
+          <div class="demo-btn-group">
+            <button type="button" class="chip-demo" onclick="fillQuick('admin', 'admin123')">
+              <i class="bi bi-shield-lock-fill" style="color:var(--primary);"></i> Admin (admin)
+            </button>
+            <button type="button" class="chip-demo" onclick="fillQuick('ahmadfadli', 'user123')">
+              <i class="bi bi-person-fill" style="color:#0ea5e9;"></i> User (ahmadfadli)
+            </button>
+          </div>
+        </div>
       </form>
 
-      <!-- Demo Login Cepat -->
-      <div class="split-demo-chips">
-        <span><i class="bi bi-lightning-charge-fill" style="color:#eab308;"></i> Akses Cepat (Klik untuk isi formulir):</span>
-        <div class="demo-btn-group">
-          <button type="button" class="chip-demo" onclick="fillQuick('admin', 'admin123')">
-            <i class="bi bi-shield-lock-fill" style="color:var(--primary);"></i> Admin (admin)
-          </button>
-          <button type="button" class="chip-demo" onclick="fillQuick('ahmadfadli', 'user123')">
-            <i class="bi bi-person-fill" style="color:#0ea5e9;"></i> User (ahmadfadli)
-          </button>
-        </div>
-      </div>
+      <!-- ════════ FORM 2: DAFTAR AKUN (REGISTER) ════════ -->
+      <form 
+        action="login.php" 
+        method="POST" 
+        class="split-form" 
+        id="formRegister" 
+        style="<?= $activeTab === 'register' ? '' : 'display:none;' ?>"
+      >
+        <input type="hidden" name="auth_action" value="register">
 
-      <div style="margin-top:28px;font-size:0.78rem;color:#94a3b8;">
-        &copy; 2026 INVENTO &mdash; Sistem Inventaris Himpunan Mahasiswa
+        <!-- Nama Lengkap -->
+        <div class="form-group">
+          <label for="regNama">Nama Lengkap</label>
+          <div class="input-icon-wrapper">
+            <i class="bi bi-person-badge input-icon"></i>
+            <input 
+              type="text" 
+              name="reg_nama" 
+              id="regNama" 
+              class="form-control" 
+              placeholder="Masukkan nama lengkap Anda" 
+              value="<?= htmlspecialchars($regNamaInput) ?>" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Username & Email (2-Kolom Berdampingan) -->
+        <div class="form-row-2col">
+          <div class="form-group">
+            <label for="regUser">Username</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-at input-icon"></i>
+              <input 
+                type="text" 
+                name="reg_username" 
+                id="regUser" 
+                class="form-control" 
+                placeholder="misal: budi_santoso" 
+                value="<?= htmlspecialchars($regUserInput) ?>" 
+                required
+              >
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="regEmail">Email Anggota</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-envelope input-icon"></i>
+              <input 
+                type="email" 
+                name="email" 
+                id="regEmail" 
+                class="form-control" 
+                placeholder="nama@email.com" 
+                value="<?= htmlspecialchars($regEmailInput) ?>" 
+                required
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Password Baru & Konfirmasi Password (2-Kolom Berdampingan) -->
+        <div class="form-row-2col">
+          <div class="form-group">
+            <label for="regPass">Password Baru</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-lock input-icon"></i>
+              <input 
+                type="password" 
+                name="reg_password" 
+                id="regPass" 
+                class="form-control" 
+                placeholder="Min. 4 karakter" 
+                required
+              >
+              <button 
+                type="button" 
+                class="btn-toggle-password" 
+                onclick="togglePasswordVisibility('regPass', 'eyeIconReg')" 
+                title="Lihat/Sembunyikan"
+              >
+                <i class="bi bi-eye" id="eyeIconReg"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="regPassConf">Konfirmasi Password</label>
+            <div class="input-icon-wrapper">
+              <i class="bi bi-shield-check input-icon"></i>
+              <input 
+                type="password" 
+                name="reg_password_confirm" 
+                id="regPassConf" 
+                class="form-control" 
+                placeholder="Ulangi password" 
+                required
+              >
+              <button 
+                type="button" 
+                class="btn-toggle-password" 
+                onclick="togglePasswordVisibility('regPassConf', 'eyeIconRegConf')" 
+                title="Lihat/Sembunyikan"
+              >
+                <i class="bi bi-eye" id="eyeIconRegConf"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" name="submit_register" class="btn-submit-auth">
+          <i class="bi bi-person-check-fill"></i> Daftar Akun
+        </button>
+
+        <div style="margin-top:12px;font-size:0.78rem;color:#718096;text-align:center;">
+          <em>*(Akun anggota baru akan langsung aktif dan otomatis masuk ke sistem)*</em>
+        </div>
+      </form>
+
+      <!-- Footer Info -->
+      <div style="margin-top:24px;font-size:0.78rem;color:#94a3b8;">
+        &copy; 2026 <?= htmlspecialchars($settings['app_name']) ?> &mdash; Sistem Inventaris Himpunan Mahasiswa
       </div>
     </div>
 
-    <!-- ═══ SISI KANAN: Logo & Identitas Visual ═══ -->
+    <!-- ═══ SISI KANAN: Visual Identity Split-Screen ═══ -->
     <div class="split-logo-side">
       <div class="logo-card-container">
-        <img src="logo.png" alt="INVENTO Logo" class="invento-logo-img">
-        <h3>INVENTO</h3>
+        <?php if (!empty($settings['app_logo']) && file_exists(__DIR__ . '/' . ltrim($settings['app_logo'], '/'))): ?>
+          <img src="<?= htmlspecialchars(ltrim($settings['app_logo'], '/')) ?>" alt="Logo Sistem" class="invento-logo-img">
+        <?php elseif (file_exists(__DIR__ . '/logo.png')): ?>
+          <img src="logo.png" alt="INVENTO Logo" class="invento-logo-img">
+        <?php else: ?>
+          <div class="invento-logo-img" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);height:180px;font-size:3rem;color:#ffffff;">
+            <i class="bi bi-box-seam-fill"></i>
+          </div>
+        <?php endif; ?>
+
+        <h3><?= htmlspecialchars($settings['app_name']) ?></h3>
         <p>
-          Platform terintegrasi pengelolaan aset, peminjaman barang, dan manajemen keanggotaan himpunan secara rapi, cepat, dan transparan.
+          <?= htmlspecialchars($settings['app_subtitle'] ?? 'Platform terintegrasi pengelolaan aset, peminjaman barang, dan manajemen keanggotaan himpunan secara rapi, cepat, dan transparan.') ?>
         </p>
+
+        <div class="brand-features-row">
+          <span class="brand-badge"><i class="bi bi-box-seam"></i> Peminjaman Aset</span>
+          <span class="brand-badge"><i class="bi bi-clock-history"></i> Riwayat Transparan</span>
+          <span class="brand-badge"><i class="bi bi-shield-check"></i> Akses Mandiri</span>
+        </div>
       </div>
     </div>
 
   </div>
 
   <script>
-    function togglePasswordVisibility() {
-      const passInp = document.getElementById('password');
-      const eyeIcon = document.getElementById('eyeIcon');
-      if (passInp.type === 'password') {
-        passInp.type = 'text';
-        eyeIcon.className = 'bi bi-eye-slash';
+    /**
+     * Berpindah antara Tab Masuk dan Tab Daftar Akun secara instan
+     */
+    function switchAuthTab(tab) {
+      const isLogin = (tab === 'login');
+      const tabLoginBtn = document.getElementById('tabLoginBtn');
+      const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+      const formLogin = document.getElementById('formLogin');
+      const formRegister = document.getElementById('formRegister');
+      const authTitle = document.getElementById('authTitle');
+      const authSubtitle = document.getElementById('authSubtitle');
+      const alertBox = document.getElementById('authAlertError');
+
+      if (isLogin) {
+        tabLoginBtn.classList.add('active');
+        tabRegisterBtn.classList.remove('active');
+        formLogin.style.display = 'block';
+        formRegister.style.display = 'none';
+        authTitle.textContent = 'Masuk ke Akun';
+        authSubtitle.textContent = 'Masukkan kredensial Anda untuk mengakses sistem inventaris.';
       } else {
-        passInp.type = 'password';
-        eyeIcon.className = 'bi bi-eye';
+        tabRegisterBtn.classList.add('active');
+        tabLoginBtn.classList.remove('active');
+        formLogin.style.display = 'none';
+        formRegister.style.display = 'block';
+        authTitle.textContent = 'Buat Akun Baru';
+        authSubtitle.textContent = 'Lengkapi data singkat berikut untuk mendaftar akun anggota.';
+      }
+
+      // Sembunyikan notifikasi error lama jika user berpindah tab
+      if (alertBox) {
+        alertBox.style.display = 'none';
       }
     }
 
+    /**
+     * Lihat / sembunyikan password
+     */
+    function togglePasswordVisibility(fieldId, iconId) {
+      const field = document.getElementById(fieldId);
+      const icon = document.getElementById(iconId);
+      if (!field || !icon) return;
+
+      if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+      } else {
+        field.type = 'password';
+        icon.className = 'bi bi-eye';
+      }
+    }
+
+    /**
+     * Isi cepat akun demo
+     */
     function fillQuick(user, pass) {
-      document.getElementById('email').value = user;
-      document.getElementById('password').value = pass;
+      switchAuthTab('login');
+      document.getElementById('loginEmail').value = user;
+      document.getElementById('loginPassword').value = pass;
     }
   </script>
 </body>
