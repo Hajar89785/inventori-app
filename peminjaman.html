@@ -79,15 +79,15 @@
         <p class="nav-label">Menu Utama</p>
         <ul style="list-style:none;padding:0;margin:0;">
           <li class="nav-item"><a href="admin.html" class="nav-link"><i class="bi bi-grid-fill"></i> Dashboard</a></li>
-          <li class="nav-item"><a href="kelola_barang.html" class="nav-link active"><i class="bi bi-box-seam-fill"></i> Data Barang</a></li>
-          <li class="nav-item"><a href="peminjaman.html" class="nav-link"><i class="bi bi-arrow-left-right"></i> Peminjaman</a></li>
+          <li class="nav-item"><a href="kelola_barang.html" class="nav-link"><i class="bi bi-box-seam-fill"></i> Data Barang</a></li>
+          <li class="nav-item"><a href="peminjaman.html" class="nav-link active"><i class="bi bi-arrow-left-right"></i> Peminjaman</a></li>
         </ul>
 
         <!-- ── Manajemen Akun ── -->
         <p class="nav-label">Manajemen Akun</p>
         <ul style="list-style:none;padding:0;margin:0;">
           <li class="nav-item"><a href="manajemen_akun.html" class="nav-link"><i class="bi bi-people-fill"></i> Pengurus &amp; Anggota</a></li>
-          <li class="nav-item"><a href="javascript:void(0)" class="nav-link btn-open-profile" onclick="openProfileModal()"><i class="bi bi-person-gear"></i> Pengaturan Profil</a></li>
+          <li class="nav-item"><a href="admin_profil.php" class="nav-link"><i class="bi bi-person-gear"></i> Pengaturan Profil</a></li>
           <li class="nav-item"><a href="admin_settings.php" class="nav-link"><i class="bi bi-sliders"></i> Pengaturan Sistem</a></li>
           <li class="nav-item"><a href="javascript:void(0)" class="nav-link btn-logout" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> Keluar (Logout)</a></li>
         </ul>
@@ -114,7 +114,6 @@
         </div>
         <div class="navbar-actions">
           <div class="search-box"><i class="bi bi-search"></i><input type="text" id="loanSearchInput" placeholder="Cari nama peminjam / barang..."></div>
-          <div class="user-avatar" title="Admin" onclick="openProfileModal()" style="cursor:pointer;">A</div>
         </div>
       </header>
 

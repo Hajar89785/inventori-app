@@ -203,11 +203,6 @@ $settingsJson = json_encode($settings);
           </button>
           <span class="page-title"><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Pengurus</span>
         </div>
-        <div class="navbar-actions">
-          <div class="user-avatar" title="Profil Admin" onclick="openProfileModal()" style="cursor:pointer;">
-            <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
-          </div>
-        </div>
       </header>
 
       <!-- Content Body (Persis Seperti Halaman Peminjaman) -->

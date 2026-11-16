@@ -165,7 +165,7 @@ try {
             </a>
           </li>
           <li class="nav-item">
-            <a href="javascript:void(0)" class="nav-link btn-open-profile" onclick="openProfileModal()">
+            <a href="admin_profil.php" class="nav-link">
               <i class="bi bi-person-gear"></i> Pengaturan Profil
             </a>
           </li>
@@ -212,9 +212,6 @@ try {
           <div class="search-box">
             <i class="bi bi-search"></i>
             <input type="text" id="loanSearchInput" placeholder="Cari nama peminjam / barang...">
-          </div>
-          <div class="user-avatar" title="Profil Admin" onclick="openProfileModal()" style="cursor:pointer;">
-            <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
           </div>
         </div>
       </header>
