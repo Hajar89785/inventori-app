@@ -16,8 +16,12 @@ if (!isset($_SESSION['invento_user']['role']) || $_SESSION['invento_user']['role
     exit;
 }
 
-// Sinkronkan data sesi ke localStorage dan sajikan admin.html
+require_once __DIR__ . '/app_settings.php';
+$settings = getAppSettings($pdo);
+
+// Sinkronkan data sesi & settings ke localStorage dan sajikan admin.html
 $adminHtml = file_get_contents(__DIR__ . '/admin.html');
 $userJson = json_encode($_SESSION['invento_user']);
-$syncScript = "<script>localStorage.setItem('invento_user', " . json_encode($userJson) . ");</script>";
+$settingsJson = json_encode($settings);
+$syncScript = "<script>localStorage.setItem('invento_user', " . json_encode($userJson) . "); localStorage.setItem('invento_settings', " . json_encode($settingsJson) . ");</script>";
 echo str_replace('</head>', $syncScript . '</head>', $adminHtml);

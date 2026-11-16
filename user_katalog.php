@@ -13,13 +13,17 @@ if (!isset($_SESSION['invento_logged_in']) || $_SESSION['invento_logged_in'] !==
 
 $currentUser = $_SESSION['invento_user'] ?? [];
 $userJson = json_encode($currentUser);
+
+require_once __DIR__ . '/app_settings.php';
+$settings = getAppSettings($pdo);
+$settingsJson = json_encode($settings);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>INVENTO — Katalog &amp; Pinjam Barang</title>
+  <title><?= htmlspecialchars($settings['app_name']) ?> — Katalog &amp; Pinjam Barang</title>
   <!-- Google Fonts: Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +33,7 @@ $userJson = json_encode($currentUser);
   <link rel="stylesheet" href="style.css">
   <script>
     localStorage.setItem('invento_user', <?= json_encode($userJson) ?>);
+    localStorage.setItem('invento_settings', <?= json_encode($settingsJson) ?>);
   </script>
 </head>
 <body id="userPage" data-page="user_katalog">
@@ -40,10 +45,10 @@ $userJson = json_encode($currentUser);
     <!-- ═══ Sidebar User / Peminjam ═══ -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
+        <div class="brand-icon"><?= renderBrandLogoHtml($settings['app_logo']) ?></div>
         <div>
-          <h1>INVENTO</h1>
-          <small>Portal Peminjam</small>
+          <h1 class="brand-app-name"><?= htmlspecialchars($settings['app_name']) ?></h1>
+          <small class="brand-app-subtitle">Portal Peminjam</small>
         </div>
         <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup Menu">
           <i class="bi bi-x-lg"></i>
@@ -94,7 +99,7 @@ $userJson = json_encode($currentUser);
       </div>
 
       <div class="sidebar-footer">
-        <p class="mb-0">&copy; 2026 INVENTO Himpunan</p>
+        <p class="mb-0">&copy; 2026 <?= htmlspecialchars($settings['app_name']) ?></p>
       </div>
     </aside>
 
@@ -294,6 +299,6 @@ $userJson = json_encode($currentUser);
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="script.js?v=20261116i"></script>
+  <script src="script.js?v=20261116j"></script>
 </body>
 </html>

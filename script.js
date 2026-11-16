@@ -20,7 +20,68 @@ const API = {
   tambahAkun:        'api/tambah_akun.php',
   updateAkun:        'api/update_akun.php',
   hapusAkun:         'api/hapus_akun.php',
+  getSettings:       'api/get_settings.php',
+  updateSettings:    'api/update_settings.php',
 };
+
+// ─── Branding & System Settings Global Helpers ───────────
+window.applyBrandingSettings = function(settings) {
+  if (!settings) return;
+  const name = settings.app_name || 'INVENTO';
+  const subtitle = settings.app_subtitle || 'Inventaris Himpunan';
+  const logo = settings.app_logo || '';
+
+  // 1. Update Sidebar Brand Name & Subtitle
+  document.querySelectorAll('.sidebar-brand h1, .brand-app-name').forEach(el => {
+    el.textContent = name;
+  });
+  document.querySelectorAll('.sidebar-brand small, .brand-app-subtitle').forEach(el => {
+    const isUserPortal = document.body && document.body.dataset && (document.body.dataset.page === 'user_katalog' || document.body.id === 'userPage');
+    if (!isUserPortal) {
+      el.textContent = subtitle;
+    }
+  });
+
+  // 2. Update Sidebar Brand Icon / Logo
+  document.querySelectorAll('.sidebar-brand .brand-icon').forEach(iconEl => {
+    if (logo) {
+      iconEl.innerHTML = `<img src="${escHtml(logo)}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">`;
+    } else {
+      iconEl.innerHTML = '<i class="bi bi-box-seam-fill"></i>';
+    }
+  });
+
+  // 3. Update document.title
+  if (document.title.includes('INVENTO')) {
+    document.title = document.title.replace(/INVENTO/g, name);
+  }
+};
+
+window.loadBrandingSettings = async function() {
+  const cached = localStorage.getItem('invento_settings');
+  if (cached) {
+    try {
+      applyBrandingSettings(JSON.parse(cached));
+    } catch (e) {}
+  }
+  try {
+    const res = await apiGet(API.getSettings);
+    if (res && res.success && res.data) {
+      localStorage.setItem('invento_settings', JSON.stringify(res.data));
+      applyBrandingSettings(res.data);
+    }
+  } catch (err) {}
+};
+
+// Segera terapkan dari cache jika ada
+try {
+  const earlyCached = localStorage.getItem('invento_settings');
+  if (earlyCached) {
+    window.addEventListener('DOMContentLoaded', () => {
+      try { applyBrandingSettings(JSON.parse(earlyCached)); } catch(e){}
+    });
+  }
+} catch (e) {}
 
 // ─── Fetch Helpers ───────────────────────────────────────
 async function apiFetch(url, opts = {}) {
@@ -1959,6 +2020,9 @@ function checkAuthGuard() {
 document.addEventListener('DOMContentLoaded', () => {
   // Jalankan pemeriksaan akses wajib login
   checkAuthGuard();
+
+  // Muat pengaturan sistem & branding secara global
+  loadBrandingSettings();
 
   const body = document.body;
   const page = body.dataset.page;

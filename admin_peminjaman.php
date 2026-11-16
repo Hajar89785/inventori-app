@@ -19,7 +19,9 @@ if (!isset($_SESSION['invento_user']['role']) || $_SESSION['invento_user']['role
 $currentUser = $_SESSION['invento_user'] ?? [];
 $userJson = json_encode($currentUser);
 
-require_once __DIR__ . '/koneksi.php';
+require_once __DIR__ . '/app_settings.php';
+$settings = getAppSettings($pdo);
+$settingsJson = json_encode($settings);
 $statTotal = 0;
 $statMenunggu = 0;
 $statAktif = 0;
@@ -43,7 +45,7 @@ try {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>INVENTO — Kelola Persetujuan &amp; Peminjaman</title>
+  <title><?= htmlspecialchars($settings['app_name']) ?> — Kelola Persetujuan &amp; Peminjaman</title>
   <!-- Google Fonts: Nunito (Mazer Theme) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,6 +113,7 @@ try {
   </style>
   <script>
     localStorage.setItem('invento_user', <?= json_encode($userJson) ?>);
+    localStorage.setItem('invento_settings', <?= json_encode($settingsJson) ?>);
   </script>
 </head>
 <body id="adminPage" data-page="peminjaman">
@@ -122,10 +125,10 @@ try {
     <!-- ═══ Sidebar Admin (Mazer Style) ═══ -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
+        <div class="brand-icon"><?= renderBrandLogoHtml($settings['app_logo']) ?></div>
         <div>
-          <h1>INVENTO</h1>
-          <small>Inventaris Himpunan</small>
+          <h1 class="brand-app-name"><?= htmlspecialchars($settings['app_name']) ?></h1>
+          <small class="brand-app-subtitle"><?= htmlspecialchars($settings['app_subtitle']) ?></small>
         </div>
         <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup Menu">
           <i class="bi bi-x-lg"></i>
@@ -167,6 +170,11 @@ try {
             </a>
           </li>
           <li class="nav-item">
+            <a href="admin_settings.php" class="nav-link">
+              <i class="bi bi-sliders"></i> Pengaturan Sistem
+            </a>
+          </li>
+          <li class="nav-item">
             <a href="javascript:void(0)" class="nav-link btn-logout" onclick="handleLogout()">
               <i class="bi bi-box-arrow-right"></i> Keluar (Logout)
             </a>
@@ -186,7 +194,7 @@ try {
       </div>
 
       <div class="sidebar-footer">
-        <p class="mb-0">&copy; 2026 INVENTO Himpunan</p>
+        <p class="mb-0">&copy; 2026 <?= htmlspecialchars($settings['app_name']) ?></p>
       </div>
     </aside>
 
@@ -374,6 +382,6 @@ try {
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261116i"></script>
+  <script src="script.js?v=20261116j"></script>
 </body>
 </html>

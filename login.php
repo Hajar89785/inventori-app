@@ -15,7 +15,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/koneksi.php';
+require_once __DIR__ . '/app_settings.php';
+$settings = getAppSettings($pdo);
 
 $error = '';
 $emailInput = '';
@@ -111,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>INVENTO — Masuk ke Sistem Inventaris</title>
+  <title><?= htmlspecialchars($settings['app_name']) ?> — Masuk ke Sistem Inventaris</title>
   <!-- Google Fonts: Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -467,11 +468,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="split-form-side">
       <div class="split-brand-header">
         <div class="split-brand-icon">
-          <i class="bi bi-box-seam-fill"></i>
+          <?= renderBrandLogoHtml($settings['app_logo']) ?>
         </div>
         <div class="split-brand-text">
-          <h1>INVENTO</h1>
-          <small>Inventaris &amp; Peminjaman</small>
+          <h1><?= htmlspecialchars($settings['app_name']) ?></h1>
+          <small><?= htmlspecialchars($settings['app_subtitle']) ?></small>
         </div>
       </div>
 

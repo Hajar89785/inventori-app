@@ -6,7 +6,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/koneksi.php';
+require_once __DIR__ . '/app_settings.php';
+$settings = getAppSettings($pdo);
 
 $currentUser = $_SESSION['invento_user'] ?? [
     'nama_lengkap' => 'Administrator',
@@ -379,12 +380,12 @@ $tanggalCetak = date('d') . ' ' . ($bulanIndo[date('m')] ?? date('F')) . ' ' . d
     <!-- Kop Surat Formal -->
     <div class="kop-surat">
       <div class="kop-logo">
-        <i class="bi bi-box-seam-fill"></i>
+        <?= renderBrandLogoHtml($settings['app_logo'], 'bi-box-seam-fill', 'max-width:100%;max-height:100%;object-fit:contain;') ?>
       </div>
       <div class="kop-text">
-        <h2>Sistem Inventaris &amp; Peminjaman Barang (INVENTO)</h2>
+        <h2>Sistem Inventaris &amp; Peminjaman Barang (<?= htmlspecialchars($settings['app_name']) ?>)</h2>
         <h4>HIMPUNAN MAHASISWA &bull; KELUARGA BESAR MAHASISWA</h4>
-        <p>Gedung Sekretariat Bersama, Kampus Terpadu &bull; Email: sekretariat@invento.local &bull; Website: invento.app</p>
+        <p>Gedung Sekretariat Bersama, Kampus Terpadu &bull; Email: sekretariat@<?= strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $settings['app_name'])) ?>.local &bull; Website: <?= strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $settings['app_name'])) ?>.app</p>
       </div>
     </div>
 
