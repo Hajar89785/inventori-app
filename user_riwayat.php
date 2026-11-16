@@ -118,9 +118,6 @@ $settingsJson = json_encode($settings);
             <i class="bi bi-search"></i>
             <input type="text" id="myLoansSearchInput" placeholder="Cari nama barang / keperluan...">
           </div>
-          <div class="user-avatar" id="topbarUserAvatar" title="Profil Saya" onclick="window.location.href='user_profil.php'" style="cursor:pointer;">
-            <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'U', 0, 1)) ?>
-          </div>
         </div>
       </header>
 
