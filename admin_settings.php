@@ -6,14 +6,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ─── 3. Restriksi Hak Akses ─────────────────────────────
+// ─── Restriksi Hak Akses: Hanya untuk Admin ─────────────
 if (!isset($_SESSION['invento_logged_in']) || $_SESSION['invento_logged_in'] !== true) {
     header('Location: login.php');
     exit;
 }
 
 if (!isset($_SESSION['invento_user']['role']) || $_SESSION['invento_user']['role'] !== 'admin') {
-    // Jika bukan admin, tolak akses dan arahkan kembali ke katalog / dashboard pengguna
     header('Location: user_katalog.php');
     exit;
 }
@@ -271,41 +270,24 @@ $settingsJson = json_encode($settings);
 
     <!-- ═══ Main Content ═══ -->
     <div class="main-content">
-      <!-- Top Navbar -->
+      <!-- Top Navbar (Persis Seperti Halaman Peminjaman) -->
       <header class="top-navbar">
         <div class="d-flex align-center gap-2">
           <button class="btn-sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
-          <div class="breadcrumb d-none d-md-flex">
-            <a href="admin_dashboard.php"><i class="bi bi-house"></i> Dashboard</a>
-            <span class="separator">/</span>
-            <span class="current">Pengaturan Sistem &amp; Branding</span>
-          </div>
+          <span class="page-title"><i class="bi bi-sliders" style="color:var(--primary);"></i>&nbsp; Pengaturan Sistem &amp; Branding</span>
         </div>
-
-        <div class="navbar-right">
-          <div class="user-dropdown">
-            <div class="user-dropdown-toggle">
-              <div class="user-avatar">
-                <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
-              </div>
-              <div class="user-meta d-none d-md-block">
-                <span class="user-meta-name"><?= htmlspecialchars($currentUser['nama_lengkap'] ?? 'Administrator') ?></span>
-                <span class="user-meta-role">Pengurus / Admin</span>
-              </div>
-            </div>
+        <div class="navbar-actions">
+          <div class="user-avatar" title="Profil Admin" onclick="openProfileModal()" style="cursor:pointer;">
+            <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
           </div>
         </div>
       </header>
 
-      <!-- Page Content -->
-      <div class="content-body" style="max-width: 900px; margin: 0 auto; padding-top: 25px;">
-        <div class="page-title mb-4">
-          <h2><i class="bi bi-sliders" style="color:var(--primary);"></i> Pengaturan Sistem &amp; Branding</h2>
-          <p class="text-subtitle text-muted">Sesuaikan identitas visual aplikasi termasuk nama aplikasi, teks sub-judul/header, dan logo sistem.</p>
-        </div>
-
+      <!-- Content Body (Persis Seperti Halaman Peminjaman) -->
+      <main class="content-body">
+        
         <?php if (!empty($successMsg)): ?>
           <div class="alert alert-success" style="background:#e6f4ea;color:#137333;border:1px solid #b7e1cd;border-radius:10px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
             <i class="bi bi-check-circle-fill" style="font-size:1.2rem;"></i>
@@ -320,14 +302,15 @@ $settingsJson = json_encode($settings);
           </div>
         <?php endif; ?>
 
-        <!-- Preview Card -->
-        <div class="card mb-4" style="border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.06);background:#fff;border:none;">
-          <div class="card-body" style="padding: 24px 30px;">
-            <h4 style="font-size:1rem;font-weight:700;margin-bottom:12px;color:#4a5568;">
+        <!-- Section 1: Pratinjau Tampilan Sidebar Brand -->
+        <section class="card-section" style="margin-bottom:24px;">
+          <div class="card-header" style="padding-bottom:14px;border-bottom:1px solid #edf2f7;margin-bottom:18px;">
+            <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">
               <i class="bi bi-eye-fill" style="color:var(--primary);"></i> Pratinjau Tampilan Sidebar Brand
-            </h4>
-            <p style="font-size:0.85rem;color:#718096;margin-bottom:16px;">Tampilan langsung logo dan nama aplikasi pada header sidebar:</p>
-            
+            </h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin:0;">Tampilan langsung logo dan nama aplikasi pada header sidebar sistem:</p>
+          </div>
+          <div class="card-body">
             <div class="brand-preview-box" id="liveBrandPreview">
               <div class="preview-logo-icon" id="previewLogoBox">
                 <?php if (!empty($settings['app_logo']) && file_exists(__DIR__ . '/' . $settings['app_logo'])): ?>
@@ -342,11 +325,17 @@ $settingsJson = json_encode($settings);
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Form Card -->
-        <div class="card" style="border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.06);background:#fff;border:none;">
-          <div class="card-body" style="padding: 30px;">
+        <!-- Section 2: Form Pengaturan Identitas Aplikasi -->
+        <section class="card-section">
+          <div class="card-header" style="padding-bottom:14px;border-bottom:1px solid #edf2f7;margin-bottom:22px;">
+            <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">
+              <i class="bi bi-palette-fill" style="color:var(--primary);"></i> Identitas &amp; Logo Aplikasi
+            </h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin:0;">Sesuaikan identitas visual aplikasi untuk nama sistem, teks sub-judul/header, dan berkas logo.</p>
+          </div>
+          <div class="card-body">
             <form action="admin_settings.php" method="POST" enctype="multipart/form-data" id="settingsForm">
               
               <!-- 1. Nama Aplikasi -->
@@ -389,7 +378,7 @@ $settingsJson = json_encode($settings);
                   <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
                     <label style="display:inline-flex;align-items:center;gap:6px;font-size:0.85rem;color:#e53e3e;cursor:pointer;">
                       <input type="checkbox" name="hapus_logo" value="1" id="chkHapusLogo" onchange="toggleHapusLogo(this)">
-                      <span>Hapus logo kustom saat ini dan gunakan kembali ikon default (<i class="bi bi-box-seam-fill"></i>)</span>
+                      <span>Hapus logo kustom saat ini dan gunakan kembali ikon bawaan (<i class="bi bi-box-seam-fill"></i>)</span>
                     </label>
                   </div>
                 <?php endif; ?>
@@ -407,13 +396,66 @@ $settingsJson = json_encode($settings);
 
             </form>
           </div>
-        </div>
-      </div>
+        </section>
+
+      </main>
 
       <!-- App Footer -->
-      <footer class="app-footer text-center mt-5 mb-4 text-muted" style="font-size:0.85rem;">
-        <?= htmlspecialchars($settings['app_name']) ?> &copy; 2026 &mdash; Sistem Inventaris &amp; Peminjaman Barang
+      <footer class="app-footer">
+        <?= htmlspecialchars($settings['app_name']) ?> &copy; 2026 &mdash; Sistem Inventaris &amp; Peminjaman Barang Himpunan
       </footer>
+    </div>
+  </div>
+
+  <!-- ═══ Modal Pengaturan Profil Pengurus (Sama dengan Halaman Peminjaman) ═══ -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Pengurus</h3>
+      </div>
+      <form id="profileForm" onsubmit="handleProfileSave(event)">
+        <div class="modal-body">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div class="user-avatar" style="width:68px;height:68px;font-size:1.6rem;margin:0 auto 10px;background:linear-gradient(135deg,var(--primary),#57caeb);">
+              <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
+            </div>
+            <h4 style="font-size:1.05rem;margin-bottom:2px;"><?= htmlspecialchars($currentUser['nama_lengkap'] ?? 'Administrator') ?></h4>
+            <span class="badge badge-role-admin"><i class="bi bi-shield-lock-fill"></i> Pengurus / Admin</span>
+          </div>
+
+          <div class="form-group">
+            <label for="profNama">Nama Lengkap Pengurus</label>
+            <input type="text" class="form-control" id="profNama" value="<?= htmlspecialchars($currentUser['nama_lengkap'] ?? '') ?>">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="profUser">Username</label>
+              <input type="text" class="form-control" id="profUser" value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" readonly style="background:#f8fafc;">
+            </div>
+            <div class="form-group">
+              <label for="profEmail">Email Himpunan</label>
+              <input type="email" class="form-control" id="profEmail" value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="profPass">Password Baru</label>
+              <input type="password" class="form-control" id="profPass" name="password" placeholder="Masukkan password baru...">
+            </div>
+            <div class="form-group">
+              <label for="profPassConfirm">Konfirmasi Password Baru</label>
+              <input type="password" class="form-control" id="profPassConfirm" name="konfirmasi_password" placeholder="Ulangi password baru...">
+            </div>
+          </div>
+          <small class="text-muted" style="display:block;margin-top:-6px;margin-bottom:16px;font-size:0.8rem;color:#718096;">
+            <em>*(Kosongkan kedua kolom jika tidak ingin mengubah password)*</em>
+          </small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeProfileModal()">Tutup</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Simpan Perubahan</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -459,7 +501,6 @@ $settingsJson = json_encode($settings);
     function cancelLogoUpload() {
       fileInp.value = '';
       fileInfo.style.display = 'none';
-      // Kembalikan logo semula
       const currentLogo = <?= json_encode($settings['app_logo']) ?>;
       if (currentLogo) {
         logoBox.innerHTML = '<img src="' + currentLogo + '" alt="Preview Logo" style="width:100%;height:100%;object-fit:contain;">';

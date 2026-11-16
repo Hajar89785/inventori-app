@@ -17,11 +17,12 @@ if (!isset($_SESSION['invento_user']['role']) || $_SESSION['invento_user']['role
 }
 
 require_once __DIR__ . '/app_settings.php';
-$settings = getAppSettings($pdo);
 
 $userId     = (int) ($_SESSION['invento_user']['id'] ?? 0);
 $successMsg = '';
 $errorMsg   = '';
+
+$settings = getAppSettings($pdo);
 
 // Ambil data user terkini dari database
 $stmt = $pdo->prepare('SELECT * FROM akun WHERE id = :id');
@@ -194,41 +195,24 @@ $settingsJson = json_encode($settings);
 
     <!-- ═══ Main Content ═══ -->
     <div class="main-content">
-      <!-- Top Navbar -->
+      <!-- Top Navbar (Persis Seperti Halaman Peminjaman) -->
       <header class="top-navbar">
         <div class="d-flex align-center gap-2">
           <button class="btn-sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
-          <div class="breadcrumb d-none d-md-flex">
-            <a href="admin_dashboard.php"><i class="bi bi-house"></i> Dashboard</a>
-            <span class="separator">/</span>
-            <span class="current">Pengaturan Profil Pengurus</span>
-          </div>
+          <span class="page-title"><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Pengurus</span>
         </div>
-
-        <div class="navbar-right">
-          <div class="user-dropdown">
-            <div class="user-dropdown-toggle">
-              <div class="user-avatar">
-                <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
-              </div>
-              <div class="user-meta d-none d-md-block">
-                <span class="user-meta-name"><?= htmlspecialchars($currentUser['nama_lengkap'] ?? 'Administrator') ?></span>
-                <span class="user-meta-role">Pengurus / Admin</span>
-              </div>
-            </div>
+        <div class="navbar-actions">
+          <div class="user-avatar" title="Profil Admin" onclick="openProfileModal()" style="cursor:pointer;">
+            <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
           </div>
         </div>
       </header>
 
-      <!-- Page Content -->
-      <div class="content-body" style="max-width: 800px; margin: 0 auto; padding-top: 25px;">
-        <div class="page-title mb-4">
-          <h2><i class="bi bi-person-gear" style="color:var(--primary);"></i> Pengaturan Profil Pengurus</h2>
-          <p class="text-subtitle text-muted">Perbarui informasi profil dan kata sandi akun admin Anda di sini.</p>
-        </div>
-
+      <!-- Content Body (Persis Seperti Halaman Peminjaman) -->
+      <main class="content-body">
+        
         <?php if (!empty($successMsg)): ?>
           <div class="alert alert-success" style="background:#e6f4ea;color:#137333;border:1px solid #b7e1cd;border-radius:10px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
             <i class="bi bi-check-circle-fill" style="font-size:1.2rem;"></i>
@@ -243,8 +227,9 @@ $settingsJson = json_encode($settings);
           </div>
         <?php endif; ?>
 
-        <div class="card" style="border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,0.06);overflow:hidden;background:#fff;border:none;">
-          <div class="card-body" style="padding: 30px;">
+        <section class="card-section">
+          <div class="card-body">
+            
             <div style="text-align:center;margin-bottom:28px;">
               <div class="user-avatar" style="width:78px;height:78px;font-size:1.9rem;margin:0 auto 12px;background:linear-gradient(135deg,var(--primary),#57caeb);box-shadow:0 4px 14px rgba(67,94,190,0.3);">
                 <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
@@ -296,13 +281,15 @@ $settingsJson = json_encode($settings);
                 </button>
               </div>
             </form>
+
           </div>
-        </div>
-      </div>
+        </section>
+
+      </main>
 
       <!-- App Footer -->
-      <footer class="app-footer text-center mt-5 mb-4 text-muted" style="font-size:0.85rem;">
-        INVENTO &copy; 2026 &mdash; Sistem Inventaris &amp; Peminjaman Barang Himpunan
+      <footer class="app-footer">
+        <?= htmlspecialchars($settings['app_name']) ?> &copy; 2026 &mdash; Sistem Inventaris &amp; Peminjaman Barang Himpunan
       </footer>
     </div>
   </div>
