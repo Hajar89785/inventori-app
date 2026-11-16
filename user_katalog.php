@@ -75,7 +75,7 @@ $settingsJson = json_encode($settings);
         <p class="nav-label">Akun Saya</p>
         <ul style="list-style:none;padding:0;margin:0;">
           <li class="nav-item">
-            <a href="javascript:void(0)" class="nav-link btn-open-profile" onclick="openProfileModal()">
+            <a href="user_profil.php" class="nav-link">
               <i class="bi bi-person-gear"></i> Pengaturan Profil
             </a>
           </li>
@@ -88,7 +88,7 @@ $settingsJson = json_encode($settings);
       </nav>
 
       <!-- Sidebar User Card -->
-      <div class="sidebar-user-card">
+      <div class="sidebar-user-card" onclick="window.location.href='user_profil.php'" style="cursor:pointer;" title="Buka Profil Saya">
         <div class="sidebar-user-avatar" id="sidebarUserAvatar">
           <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'U', 0, 1)) ?>
         </div>
@@ -118,7 +118,7 @@ $settingsJson = json_encode($settings);
             <i class="bi bi-search"></i>
             <input type="text" id="catalogSearchInput" placeholder="Cari nama atau kategori barang...">
           </div>
-          <div class="user-avatar" id="topbarUserAvatar" title="Profil Saya" onclick="openProfileModal()" style="cursor:pointer;">
+          <div class="user-avatar" id="topbarUserAvatar" title="Profil Saya" onclick="window.location.href='user_profil.php'" style="cursor:pointer;">
             <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'U', 0, 1)) ?>
           </div>
         </div>
@@ -238,60 +238,6 @@ $settingsJson = json_encode($settings);
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" id="loanModalCancel" onclick="closeModal('loanModal')">Batal</button>
           <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i> Ajukan Peminjaman</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ═══ Modal Pengaturan Profil Pengguna ═══ -->
-  <div class="modal-overlay" id="profileModal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Saya</h3>
-      </div>
-      <form id="profileForm" onsubmit="handleProfileSave(event)" novalidate>
-        <div class="modal-body">
-          <div style="text-align:center;margin-bottom:20px;">
-            <div class="user-avatar" id="modalProfAvatar" style="width:72px;height:72px;font-size:1.8rem;margin:0 auto 10px;background:var(--primary-gradient);">
-              <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'U', 0, 1)) ?>
-            </div>
-            <h4 style="margin:0;font-size:1.05rem;" id="modalProfName"><?= htmlspecialchars($currentUser['nama_lengkap'] ?? 'Pengguna') ?></h4>
-            <span class="badge badge-success" style="font-size:0.75rem;padding:3px 10px;" id="modalProfBadge">Anggota / Kader</span>
-          </div>
-
-          <div class="form-group">
-            <label for="profNama">Nama Lengkap</label>
-            <input type="text" class="form-control" id="profNama" value="<?= htmlspecialchars($currentUser['nama_lengkap'] ?? '') ?>" required>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profUser">Username</label>
-              <input type="text" class="form-control" id="profUser" value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" readonly style="background:#f1f5f9;cursor:not-allowed;">
-            </div>
-            <div class="form-group">
-              <label for="profEmail">Email</label>
-              <input type="email" class="form-control" id="profEmail" value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>">
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profPass">Password Baru</label>
-              <input type="password" class="form-control" id="profPass" name="password" placeholder="Masukkan password baru...">
-            </div>
-            <div class="form-group">
-              <label for="profPassConfirm">Konfirmasi Password Baru</label>
-              <input type="password" class="form-control" id="profPassConfirm" name="konfirmasi_password" placeholder="Ulangi password baru...">
-            </div>
-          </div>
-          <small class="text-muted" style="display:block;margin-top:-6px;margin-bottom:16px;font-size:0.8rem;color:#718096;">
-            <em>*(Kosongkan kedua kolom jika tidak ingin mengubah password)*</em>
-          </small>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeProfileModal()">Tutup</button>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Simpan Perubahan</button>
         </div>
       </form>
     </div>
