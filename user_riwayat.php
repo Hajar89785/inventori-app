@@ -30,7 +30,7 @@ $settingsJson = json_encode($settings);
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261117b">
   <script>
     localStorage.setItem('invento_user', <?= json_encode($userJson) ?>);
     localStorage.setItem('invento_settings', <?= json_encode($settingsJson) ?>);
@@ -156,8 +156,8 @@ $settingsJson = json_encode($settings);
             <div class="d-flex align-center gap-2">
               <h2><i class="bi bi-table"></i> Daftar Peminjaman Saya</h2>
             </div>
-            <div class="d-flex align-center gap-3">
-              <div class="d-flex align-center gap-2">
+            <div class="d-flex align-center gap-2 flex-wrap">
+              <div class="d-flex align-center gap-2 flex-wrap">
                 <label for="myLoansStatusSelect" style="font-size:0.85rem;font-weight:700;color:var(--text-secondary);display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;">
                   <i class="bi bi-funnel-fill" style="color:var(--primary);"></i> Status:
                 </label>
@@ -179,8 +179,8 @@ $settingsJson = json_encode($settings);
           </div>
 
           <div class="card-body" style="padding:0;">
-            <div class="table-wrapper">
-              <table class="data-table">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover data-table align-middle mb-0">
                 <thead>
                   <tr>
                     <th style="width:50px;" class="text-center">No</th>
@@ -217,6 +217,6 @@ $settingsJson = json_encode($settings);
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="script.js?v=20261116j"></script>
+  <script src="script.js?v=20261117b"></script>
 </body>
 </html>

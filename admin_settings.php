@@ -121,7 +121,7 @@ $settingsJson = json_encode($settings);
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261117b">
   <style>
     .brand-preview-box {
       background: #1e1e2d;
@@ -273,7 +273,7 @@ $settingsJson = json_encode($settings);
       <!-- Top Navbar (Persis Seperti Halaman Peminjaman) -->
       <header class="top-navbar">
         <div class="d-flex align-center gap-2">
-          <button class="btn-sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">
+          <button class="btn-sidebar-toggle menu-toggle" id="sidebarToggle" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
           <span class="page-title"><i class="bi bi-sliders" style="color:var(--primary);"></i>&nbsp; Pengaturan Sistem &amp; Branding</span>
@@ -380,7 +380,7 @@ $settingsJson = json_encode($settings);
               </div>
 
               <!-- Tombol Aksi -->
-              <div class="d-flex justify-content-between align-items-center" style="border-top:1px solid #edf2f7;padding-top:22px;">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-top:1px solid #edf2f7;padding-top:22px;">
                 <a href="admin_dashboard.php" class="btn btn-outline" style="border-radius:8px;padding:9px 18px;">
                   <i class="bi bi-arrow-left"></i> Kembali ke Dashboard
                 </a>
@@ -402,62 +402,10 @@ $settingsJson = json_encode($settings);
     </div>
   </div>
 
-  <!-- ═══ Modal Pengaturan Profil Pengurus (Sama dengan Halaman Peminjaman) ═══ -->
-  <div class="modal-overlay" id="profileModal">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h3><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Pengurus</h3>
-      </div>
-      <form id="profileForm" onsubmit="handleProfileSave(event)">
-        <div class="modal-body">
-          <div style="text-align:center;margin-bottom:20px;">
-            <div class="user-avatar" style="width:68px;height:68px;font-size:1.6rem;margin:0 auto 10px;background:linear-gradient(135deg,var(--primary),#57caeb);">
-              <?= strtoupper(substr($currentUser['nama_lengkap'] ?? 'A', 0, 1)) ?>
-            </div>
-            <h4 style="font-size:1.05rem;margin-bottom:2px;"><?= htmlspecialchars($currentUser['nama_lengkap'] ?? 'Administrator') ?></h4>
-            <span class="badge badge-role-admin"><i class="bi bi-shield-lock-fill"></i> Pengurus / Admin</span>
-          </div>
-
-          <div class="form-group">
-            <label for="profNama">Nama Lengkap Pengurus</label>
-            <input type="text" class="form-control" id="profNama" value="<?= htmlspecialchars($currentUser['nama_lengkap'] ?? '') ?>">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profUser">Username</label>
-              <input type="text" class="form-control" id="profUser" value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" readonly style="background:#f8fafc;">
-            </div>
-            <div class="form-group">
-              <label for="profEmail">Email Himpunan</label>
-              <input type="email" class="form-control" id="profEmail" value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profPass">Password Baru</label>
-              <input type="password" class="form-control" id="profPass" name="password" placeholder="Masukkan password baru...">
-            </div>
-            <div class="form-group">
-              <label for="profPassConfirm">Konfirmasi Password Baru</label>
-              <input type="password" class="form-control" id="profPassConfirm" name="konfirmasi_password" placeholder="Ulangi password baru...">
-            </div>
-          </div>
-          <small class="text-muted" style="display:block;margin-top:-6px;margin-bottom:16px;font-size:0.8rem;color:#718096;">
-            <em>*(Kosongkan kedua kolom jika tidak ingin mengubah password)*</em>
-          </small>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeProfileModal()">Tutup</button>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Simpan Perubahan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261116j"></script>
+  <script src="script.js?v=20261117b"></script>
   <script>
     const nameInp = document.getElementById('appNameInput');
     const subInp = document.getElementById('appSubtitleInput');

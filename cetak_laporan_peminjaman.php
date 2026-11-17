@@ -316,6 +316,13 @@ $tanggalCetak = date('d') . ' ' . ($bulanIndo[date('m')] ?? date('F')) . ' ' . d
       margin-top: 2px;
     }
 
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 24px;
+    }
+
     /* Print Styles */
     @media print {
       body {
@@ -348,6 +355,58 @@ $tanggalCetak = date('d') . ' ' . ($bulanIndo[date('m')] ?? date('F')) . ' ' . d
       @page {
         size: A4 portrait;
         margin: 10mm;
+      }
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px 8px;
+      }
+      .print-actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+      .print-actions-bar > div {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+      .print-actions-bar .btn-action {
+        width: 100%;
+        justify-content: center;
+      }
+      .report-paper {
+        padding: 24px 14px;
+      }
+      .kop-surat {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+      }
+      .kop-logo {
+        margin: 0 auto;
+      }
+      .report-summary-cards {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .table-responsive .report-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        font-size: 0.72rem;
+      }
+      .report-table th,
+      .report-table td {
+        padding: 6px 4px !important;
+        font-size: 0.72rem !important;
+      }
+      .signature-section {
+        flex-direction: column;
+        gap: 28px;
+        align-items: center;
       }
     }
   </style>
@@ -420,60 +479,62 @@ $tanggalCetak = date('d') . ' ' . ($bulanIndo[date('m')] ?? date('F')) . ' ' . d
     </div>
 
     <!-- Tabel Data Peminjaman -->
-    <table class="report-table">
-      <thead>
-        <tr>
-          <th style="width:35px;text-align:center;">No</th>
-          <th>Nama Peminjam</th>
-          <th>Barang Inventaris</th>
-          <th style="width:50px;text-align:center;">Jml</th>
-          <th style="width:90px;text-align:center;">Tgl Pinjam</th>
-          <th style="width:90px;text-align:center;">Jadwal Kembali</th>
-          <th>Keperluan / Kegiatan</th>
-          <th style="width:110px;text-align:center;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($rows)): ?>
+    <div class="table-responsive">
+      <table class="report-table">
+        <thead>
           <tr>
-            <td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;">
-              Tidak ada data transaksi peminjaman pada periode ini.
-            </td>
+            <th style="width:35px;text-align:center;">No</th>
+            <th>Nama Peminjam</th>
+            <th>Barang Inventaris</th>
+            <th style="width:50px;text-align:center;">Jml</th>
+            <th style="width:90px;text-align:center;">Tgl Pinjam</th>
+            <th style="width:90px;text-align:center;">Jadwal Kembali</th>
+            <th>Keperluan / Kegiatan</th>
+            <th style="width:110px;text-align:center;">Status</th>
           </tr>
-        <?php else: ?>
-          <?php 
-          $no = 1;
-          foreach ($rows as $r): 
-            $st = $r['status_pinjam'];
-            $stBadge = 'st-menunggu';
-            $stLabel = 'Menunggu';
-            if ($st === 'disetujui' || $st === 'aktif') {
-                $stBadge = 'st-dipinjam';
-                $stLabel = 'Dipinjam';
-            } elseif ($st === 'selesai' || $st === 'dikembalikan') {
-                $stBadge = 'st-selesai';
-                $stLabel = 'Selesai';
-            } elseif ($st === 'ditolak') {
-                $stBadge = 'st-ditolak';
-                $stLabel = 'Ditolak';
-            }
-          ?>
+        </thead>
+        <tbody>
+          <?php if (empty($rows)): ?>
             <tr>
-              <td style="text-align:center;font-weight:700;"><?= $no++ ?></td>
-              <td><strong><?= htmlspecialchars($r['nama_peminjam']) ?></strong></td>
-              <td><?= htmlspecialchars($r['nama_barang']) ?> <small style="color:#64748b;">(<?= htmlspecialchars($r['kategori'] ?? '') ?>)</small></td>
-              <td style="text-align:center;font-weight:700;"><?= (int)($r['jumlah'] ?? 1) ?></td>
-              <td style="text-align:center;"><?= date('d/m/Y', strtotime($r['tanggal_pinjam'])) ?></td>
-              <td style="text-align:center;"><?= date('d/m/Y', strtotime($r['tanggal_kembali'])) ?></td>
-              <td style="font-size:0.8rem;"><?= htmlspecialchars($r['keperluan'] ?? '-') ?></td>
-              <td style="text-align:center;">
-                <span class="status-badge <?= $stBadge ?>"><?= $stLabel ?></span>
+              <td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;">
+                Tidak ada data transaksi peminjaman pada periode ini.
               </td>
             </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
+          <?php else: ?>
+            <?php 
+            $no = 1;
+            foreach ($rows as $r): 
+              $st = $r['status_pinjam'];
+              $stBadge = 'st-menunggu';
+              $stLabel = 'Menunggu';
+              if ($st === 'disetujui' || $st === 'aktif') {
+                  $stBadge = 'st-dipinjam';
+                  $stLabel = 'Dipinjam';
+              } elseif ($st === 'selesai' || $st === 'dikembalikan') {
+                  $stBadge = 'st-selesai';
+                  $stLabel = 'Selesai';
+              } elseif ($st === 'ditolak') {
+                  $stBadge = 'st-ditolak';
+                  $stLabel = 'Ditolak';
+              }
+            ?>
+              <tr>
+                <td style="text-align:center;font-weight:700;"><?= $no++ ?></td>
+                <td><strong><?= htmlspecialchars($r['nama_peminjam']) ?></strong></td>
+                <td><?= htmlspecialchars($r['nama_barang']) ?> <small style="color:#64748b;">(<?= htmlspecialchars($r['kategori'] ?? '') ?>)</small></td>
+                <td style="text-align:center;font-weight:700;"><?= (int)($r['jumlah'] ?? 1) ?></td>
+                <td style="text-align:center;"><?= date('d/m/Y', strtotime($r['tanggal_pinjam'])) ?></td>
+                <td style="text-align:center;"><?= date('d/m/Y', strtotime($r['tanggal_kembali'])) ?></td>
+                <td style="font-size:0.8rem;"><?= htmlspecialchars($r['keperluan'] ?? '-') ?></td>
+                <td style="text-align:center;">
+                  <span class="status-badge <?= $stBadge ?>"><?= $stLabel ?></span>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Tanda Tangan Formal: Peminjam dan Pemberi Barang -->
     <div class="signature-section" style="display:flex;justify-content:space-between;gap:20px;margin-top:40px;">

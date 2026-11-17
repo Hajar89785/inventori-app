@@ -105,7 +105,7 @@ $settingsJson = json_encode($settings);
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261117b">
   <script>
     localStorage.setItem('invento_user', <?= json_encode($userJson) ?>);
     localStorage.setItem('invento_settings', <?= json_encode($settingsJson) ?>);
@@ -198,7 +198,7 @@ $settingsJson = json_encode($settings);
       <!-- Top Navbar (Persis Seperti Halaman Peminjaman) -->
       <header class="top-navbar">
         <div class="d-flex align-center gap-2">
-          <button class="btn-sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">
+          <button class="btn-sidebar-toggle menu-toggle" id="sidebarToggle" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
           <span class="page-title"><i class="bi bi-person-gear" style="color:var(--primary);"></i>&nbsp; Pengaturan Profil Pengurus</span>
@@ -241,7 +241,7 @@ $settingsJson = json_encode($settings);
                 <input type="text" class="form-control" id="profNama" name="nama_lengkap" value="<?= htmlspecialchars($user['nama_lengkap'] ?? '') ?>" required style="height:44px;border-radius:8px;">
               </div>
 
-              <div class="form-row mb-3" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-row mb-3">
                 <div class="form-group">
                   <label for="profUser" style="font-weight:700;font-size:0.85rem;color:#4a5568;margin-bottom:6px;display:block;">Username</label>
                   <input type="text" class="form-control" id="profUser" value="<?= htmlspecialchars($user['username'] ?? '') ?>" readonly style="background:#f8fafc;cursor:not-allowed;height:44px;border-radius:8px;">
@@ -253,7 +253,7 @@ $settingsJson = json_encode($settings);
               </div>
 
               <!-- ═══ Form Ubah Password (2 Kolom) ═══ -->
-              <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-row">
                 <div class="form-group">
                   <label for="profPass" style="font-weight:700;font-size:0.85rem;color:#4a5568;margin-bottom:6px;display:block;">Password Baru</label>
                   <input type="password" class="form-control" id="profPass" name="password" placeholder="Masukkan password baru..." style="height:44px;border-radius:8px;">
@@ -267,7 +267,7 @@ $settingsJson = json_encode($settings);
                 <em>*(Kosongkan kedua kolom jika tidak ingin mengubah password)*</em>
               </small>
 
-              <div class="d-flex justify-content-between align-items-center" style="border-top:1px solid #edf2f7;padding-top:20px;">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-top:1px solid #edf2f7;padding-top:20px;">
                 <a href="admin_dashboard.php" class="btn btn-outline" style="border-radius:8px;padding:9px 18px;">
                   <i class="bi bi-arrow-left"></i> Kembali ke Dashboard
                 </a>
@@ -292,6 +292,6 @@ $settingsJson = json_encode($settings);
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261116j"></script>
+  <script src="script.js?v=20261117b"></script>
 </body>
 </html>

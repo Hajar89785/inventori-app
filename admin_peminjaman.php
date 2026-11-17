@@ -52,7 +52,7 @@ try {
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261117b">
   <style>
     /* ── Soft Badges dengan Titik Indikator (Mirip Badge Tersedia) ── */
     .badge-soft {
@@ -293,8 +293,8 @@ try {
         <!-- Loans Table -->
         <section class="card-section" style="border-radius: 0 0 var(--radius-md) var(--radius-md); margin-top:0;">
           <div class="card-body" style="padding:0;">
-            <div class="table-wrapper">
-              <table class="data-table">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover data-table align-middle mb-0">
                 <thead>
                   <tr>
                     <th style="width:45px;" class="text-center">No</th>
@@ -379,6 +379,6 @@ try {
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261116j"></script>
+  <script src="script.js?v=20261117b"></script>
 </body>
 </html>

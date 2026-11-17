@@ -151,58 +151,67 @@ function showConfirm(title, msg, onOk) {
 }
 
 // ─── Sidebar / Modal / Form Helpers ─────────────────────
+window.toggleSidebar = function() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (!sb) return;
+
+  if (window.innerWidth <= 992) {
+    const willOpen = !sb.classList.contains('open');
+    sb.classList.toggle('open', willOpen);
+    if (bd) bd.classList.toggle('active', willOpen);
+  } else {
+    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('invento_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+  }
+};
+
+// Global click delegation untuk tombol sidebar toggle, close, dan backdrop
+document.addEventListener('click', function(e) {
+  const toggleBtn = e.target.closest('#sidebarToggle, .btn-sidebar-toggle, .menu-toggle');
+  if (toggleBtn) {
+    e.preventDefault();
+    window.toggleSidebar();
+    return;
+  }
+  const closeBtn = e.target.closest('#sidebarCloseBtn');
+  if (closeBtn) {
+    e.preventDefault();
+    const sb = document.getElementById('sidebar');
+    const bd = document.getElementById('sidebarBackdrop');
+    if (window.innerWidth <= 992) {
+      if (sb) sb.classList.remove('open');
+      if (bd) bd.classList.remove('active');
+    } else {
+      document.body.classList.add('sidebar-collapsed');
+      localStorage.setItem('invento_sidebar_collapsed', 'true');
+    }
+    return;
+  }
+  const backdrop = e.target.closest('#sidebarBackdrop');
+  if (backdrop) {
+    const sb = document.getElementById('sidebar');
+    if (sb) sb.classList.remove('open');
+    backdrop.classList.remove('active');
+    return;
+  }
+});
+
 function initSidebar() {
-  const btn = document.getElementById('sidebarToggle');
-  const sb  = document.getElementById('sidebar');
-  const bd  = document.getElementById('sidebarBackdrop');
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
   if (!sb) return;
 
   const isMobile = () => window.innerWidth <= 992;
 
   // Pulihkan status collapse sidebar di Desktop dari localStorage
-  const savedCollapsed = localStorage.getItem('invento_sidebar_collapsed');
-  if (!isMobile() && savedCollapsed === 'true') {
-    document.body.classList.add('sidebar-collapsed');
-  }
-
-  // Global toggle sidebar function
-  window.toggleSidebar = function() {
-    if (isMobile()) {
-      sb.classList.toggle('open');
-      if (bd) bd.classList.toggle('active');
+  if (!isMobile()) {
+    const savedCollapsed = localStorage.getItem('invento_sidebar_collapsed');
+    if (savedCollapsed === 'true') {
+      document.body.classList.add('sidebar-collapsed');
     } else {
-      document.body.classList.toggle('sidebar-collapsed');
-      localStorage.setItem('invento_sidebar_collapsed', document.body.classList.contains('sidebar-collapsed'));
+      document.body.classList.remove('sidebar-collapsed');
     }
-  };
-
-  if (btn) {
-    btn.onclick = (e) => {
-      e.preventDefault();
-      window.toggleSidebar();
-    };
-  }
-
-  if (bd) {
-    bd.onclick = () => {
-      sb.classList.remove('open');
-      bd.classList.remove('active');
-    };
-  }
-
-  // Tombol close di dalam sidebar brand (jika ada)
-  const closeBtn = document.getElementById('sidebarCloseBtn');
-  if (closeBtn) {
-    closeBtn.onclick = (e) => {
-      e.preventDefault();
-      if (isMobile()) {
-        sb.classList.remove('open');
-        if (bd) bd.classList.remove('active');
-      } else {
-        document.body.classList.add('sidebar-collapsed');
-        localStorage.setItem('invento_sidebar_collapsed', 'true');
-      }
-    };
   }
 
   // Profil modal trigger buttons across all admin pages
@@ -2028,6 +2037,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const page = body.dataset.page;
 
   updateSidebarUser();
+  initSidebar();
 
   if (body.id === 'adminPage') {
     switch (page) {
@@ -2041,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (body.id === 'userPage') {
     if (page === 'user_riwayat') {
       initUserRiwayatPage();
-    } else {
+    } else if (page === 'user_katalog') {
       initUserKatalogPage();
     }
   }
