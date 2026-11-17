@@ -30,7 +30,7 @@ $settingsJson = json_encode($settings);
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css?v=20261117d">
+  <link rel="stylesheet" href="style.css?v=20261117e">
   <script>
     localStorage.setItem('invento_user', <?= json_encode($userJson) ?>);
     localStorage.setItem('invento_settings', <?= json_encode($settingsJson) ?>);
@@ -242,6 +242,6 @@ $settingsJson = json_encode($settings);
 
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="script.js?v=20261117d"></script>
+  <script src="script.js?v=20261117e"></script>
 </body>
 </html>

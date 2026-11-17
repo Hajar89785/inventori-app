@@ -52,7 +52,7 @@ try {
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css?v=20261117d">
+  <link rel="stylesheet" href="style.css?v=20261117e">
   <style>
     /* ── Soft Badges dengan Titik Indikator (Mirip Badge Tersedia) ── */
     .badge-soft {
@@ -220,7 +220,7 @@ try {
       <main class="content-body">
         
         <!-- Stat Cards (5 Kategori Selaras Laporan Cetak) -->
-        <section class="stat-cards" style="margin-bottom:24px;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));">
+        <section class="stat-cards stat-cards-5" style="margin-bottom:24px;">
           <div class="stat-card" style="cursor:pointer;" onclick="filterLoanByStatus('')" title="Tampilkan Semua Transaksi">
             <div class="stat-icon bg-primary-light"><i class="bi bi-clipboard-data"></i></div>
             <div class="stat-info"><h3 id="loanStatTotal"><?= $statTotal ?></h3><p>Total Pengajuan</p></div>
@@ -379,6 +379,6 @@ try {
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261117d"></script>
+  <script src="script.js?v=20261117e"></script>
 </body>
 </html>
