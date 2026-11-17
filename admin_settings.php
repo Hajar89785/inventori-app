@@ -121,7 +121,7 @@ $settingsJson = json_encode($settings);
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="style.css?v=20261117b">
+  <link rel="stylesheet" href="style.css?v=20261117d">
   <style>
     .brand-preview-box {
       background: #1e1e2d;
@@ -273,7 +273,7 @@ $settingsJson = json_encode($settings);
       <!-- Top Navbar (Persis Seperti Halaman Peminjaman) -->
       <header class="top-navbar">
         <div class="d-flex align-center gap-2">
-          <button class="btn-sidebar-toggle menu-toggle" id="sidebarToggle" onclick="window.toggleSidebar && window.toggleSidebar()" aria-label="Toggle Menu">
+          <button class="btn-sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
           <span class="page-title"><i class="bi bi-sliders" style="color:var(--primary);"></i>&nbsp; Pengaturan Sistem &amp; Branding</span>
@@ -405,7 +405,12 @@ $settingsJson = json_encode($settings);
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Main JavaScript Logic -->
-  <script src="script.js?v=20261117b"></script>
+  <script src="script.js?v=20261117d"></script>
+  <script>
+    if (typeof initSidebar === 'function') {
+      initSidebar();
+    }
+  </script>
   <script>
     const nameInp = document.getElementById('appNameInput');
     const subInp = document.getElementById('appSubtitleInput');

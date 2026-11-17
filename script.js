@@ -151,18 +151,30 @@ function showConfirm(title, msg, onOk) {
 }
 
 // ─── Sidebar / Modal / Form Helpers ─────────────────────
+let _lastSidebarToggleTime = 0;
 window.toggleSidebar = function() {
+  const now = Date.now();
+  if (now - _lastSidebarToggleTime < 250) return;
+  _lastSidebarToggleTime = now;
+
   const sb = document.getElementById('sidebar');
   const bd = document.getElementById('sidebarBackdrop');
   if (!sb) return;
 
   if (window.innerWidth <= 992) {
     const willOpen = !sb.classList.contains('open');
-    sb.classList.toggle('open', willOpen);
-    if (bd) bd.classList.toggle('active', willOpen);
+    if (willOpen) {
+      sb.classList.add('open');
+      if (bd) bd.classList.add('active');
+    } else {
+      sb.classList.remove('open');
+      if (bd) bd.classList.remove('active');
+    }
   } else {
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-    localStorage.setItem('invento_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+    try {
+      localStorage.setItem('invento_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+    } catch (e) {}
   }
 };
 
@@ -184,7 +196,7 @@ document.addEventListener('click', function(e) {
       if (bd) bd.classList.remove('active');
     } else {
       document.body.classList.add('sidebar-collapsed');
-      localStorage.setItem('invento_sidebar_collapsed', 'true');
+      try { localStorage.setItem('invento_sidebar_collapsed', 'true'); } catch(e){}
     }
     return;
   }
@@ -212,6 +224,35 @@ function initSidebar() {
     } else {
       document.body.classList.remove('sidebar-collapsed');
     }
+  }
+
+  // Bind langsung tombol toggle agar responsif di semua event cycle
+  document.querySelectorAll('#sidebarToggle, .btn-sidebar-toggle, .menu-toggle').forEach(btn => {
+    btn.onclick = function(e) {
+      if (e) e.preventDefault();
+      window.toggleSidebar();
+    };
+  });
+
+  if (bd) {
+    bd.onclick = function() {
+      if (sb) sb.classList.remove('open');
+      bd.classList.remove('active');
+    };
+  }
+
+  const closeBtn = document.getElementById('sidebarCloseBtn');
+  if (closeBtn) {
+    closeBtn.onclick = function(e) {
+      if (e) e.preventDefault();
+      if (isMobile()) {
+        sb.classList.remove('open');
+        if (bd) bd.classList.remove('active');
+      } else {
+        document.body.classList.add('sidebar-collapsed');
+        try { localStorage.setItem('invento_sidebar_collapsed', 'true'); } catch(e){}
+      }
+    };
   }
 
   // Profil modal trigger buttons across all admin pages
@@ -2026,7 +2067,7 @@ function checkAuthGuard() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function bootApp() {
   // Jalankan pemeriksaan akses wajib login
   checkAuthGuard();
 
@@ -2034,6 +2075,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadBrandingSettings();
 
   const body = document.body;
+  if (!body) return;
   const page = body.dataset.page;
 
   updateSidebarUser();
@@ -2045,6 +2087,8 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'kelola':     initKelolaPage();     break;
       case 'peminjaman': initPeminjamanPage(); break;
       case 'akun':       initAkunPage();       break;
+      case 'profil':     initSidebar();        break;
+      case 'settings':   initSidebar();        break;
     }
   }
 
@@ -2053,6 +2097,14 @@ document.addEventListener('DOMContentLoaded', () => {
       initUserRiwayatPage();
     } else if (page === 'user_katalog') {
       initUserKatalogPage();
+    } else if (page === 'user_profil') {
+      initSidebar();
     }
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  bootApp();
+}
